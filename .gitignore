@@ -1,0 +1,12 @@
+bin/
+obj/
+csx/
+*.sln.cache
+*.suo
+*.csproj.user
+*.user
+Thumbs.db
+Source/TestResults/
+Build/Publish/
+Source/Database/Build
+/Source/Flip.TheWall.Database/*.dbmdl
