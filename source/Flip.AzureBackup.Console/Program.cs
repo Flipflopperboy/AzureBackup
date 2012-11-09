@@ -8,7 +8,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 
 
-namespace AzureBackup
+namespace Flip.AzureBackup.Console
 {
 	class Program
 	{
@@ -33,9 +33,9 @@ namespace AzureBackup
 			}
 			else
 			{
-				Console.WriteLine("Inga filer");
+				System.Console.WriteLine("Inga filer");
 			}
-			Console.ReadKey();
+			System.Console.ReadKey();
 		}
 
 		private static void ProcessFileUploads(Dictionary<string, FileInfo> files, CloudBlobContainer blobContainer)
@@ -60,7 +60,7 @@ namespace AzureBackup
 						if (contentMD5 == blob.Properties.ContentMD5)
 						{
 							blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true);
-							Console.WriteLine("Uppdaterar senast ändrat datum för " + path + "...");
+							System.Console.WriteLine("Uppdaterar senast ändrat datum för " + path + "...");
 						}
 						else
 						{
@@ -80,14 +80,14 @@ namespace AzureBackup
 
 			ProcessBlobDeletions(blobs);
 
-			Console.WriteLine("Klart...");
+			System.Console.WriteLine("Klart...");
 		}
 
 		private static void ProcessBlobDeletions(Dictionary<Uri, CloudBlob> blobs)
 		{
 			foreach (var item in blobs)
 			{
-				Console.WriteLine("Deleting " + item.Key.AbsolutePath + "...");
+				System.Console.WriteLine("Deleting " + item.Key.AbsolutePath + "...");
 				item.Value.DeleteIfExists();
 			}
 		}
@@ -110,83 +110,5 @@ namespace AzureBackup
 			UseFlatBlobListing = true,
 			BlobListingDetails = BlobListingDetails.Metadata
 		};
-	}
-
-	public static class FileInfoExtensions
-	{
-		public static string GetFullPath(this FileInfo fileInfo)
-		{
-			return Path.Combine(fileInfo.Directory.ToString(), fileInfo.ToString());
-		}
-	}
-	public static class CloudBlobExtensions
-	{
-		//public static bool Exists(this CloudBlob blob)
-		//{
-		//	try
-		//	{
-		//		blob.FetchAttributes();
-		//		return true;
-		//	}
-		//	catch (StorageClientException e)
-		//	{
-		//		if (e.ErrorCode == StorageErrorCode.ResourceNotFound)
-		//		{
-		//			return false;
-		//		}
-		//		else
-		//		{
-		//			throw;
-		//		}
-		//	}
-		//}
-		public static void SetFileLastModifiedUtc(this CloudBlob blob, DateTime fileLastModifiedUtc, bool update)
-		{
-			blob.Metadata[fileLastModifiedUtcKey] = fileLastModifiedUtc.Ticks.ToString();
-			if (update)
-			{
-				blob.SetMetadata();
-			}
-		}
-		public static DateTime GetFileLastModifiedUtc(this CloudBlob blob)
-		{
-			long ticks;
-			if (long.TryParse(blob.Metadata[fileLastModifiedUtcKey], out ticks))
-			{
-				return new DateTime(ticks, DateTimeKind.Utc);
-			}
-			else
-			{
-				return DateTime.MinValue.ToUniversalTime();
-			}
-		}
-		public static void UploadFile(this CloudBlob blob, string path, DateTime lastWriteTimeUtc)
-		{
-			Console.WriteLine("Laddar upp fil " + path + " ...");
-			blob.SetFileLastModifiedUtc(lastWriteTimeUtc, false);
-			try
-			{
-				blob.UploadFile(path);
-			}
-			catch (FileNotFoundException) { /**/ }
-		}
-		private const string fileLastModifiedUtcKey = "FileLastModifiedUtcTicks";
-	}
-	public static class CloudBlobContainerExtensions
-	{
-		public static Uri GetBlobUri(this CloudBlobContainer container, string path)
-		{
-			var uriBuilder = new UriBuilder(container.Uri);
-
-			string stringToEscape = uriBuilder.Path.EndsWith(CloudBlobContainerExtensions.separator) ?
-				path :
-				separator + path;
-
-			UriBuilder resultingUriBuilder = uriBuilder;
-			resultingUriBuilder.Path += Uri.EscapeUriString(stringToEscape);
-			return uriBuilder.Uri;
-		}
-
-		private const string separator = "/";
 	}
 }
