@@ -59,10 +59,13 @@ namespace Flip.AzureBackup.Providers
 
 		public void HandleFileNotExists(CloudBlob blob, string basePath)
 		{
-			string relativePath = blob.GetRelativeFilePath();
-			string fullPath = this._fileAccessor.Combine(basePath, relativePath);
+			Uri relativeUri = blob.GetRelativeFileUri();
+			Uri baseUri = new Uri(basePath);
+			Uri fullUri = new Uri(baseUri, relativeUri);
+			string fullPath = fullUri.LocalPath;
+
 			this._logger.WriteLine("Downloading new file " + fullPath + "...");
-			this._fileAccessor.EnsureDirectories(fullPath);
+			this._fileAccessor.EnsureFileDirectory(fullPath);
 			blob.DownloadToFile(fullPath);
 		}
 

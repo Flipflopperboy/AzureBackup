@@ -16,7 +16,7 @@ namespace Flip.AzureBackup.IO
 
 			return directoryInfo
 				.GetFiles("*", SearchOption.AllDirectories)
-				.Select(file => new FileInformation(file.GetFullPath(), file.GetRelativePath(directoryPath), file.LastWriteTimeUtc));
+				.Select(file => new FileInformation(GetFullPath(file), GetRelativePath(file, directoryPath), file.LastWriteTimeUtc));
 		}
 
 		public bool DirectoryExists(string directoryPath)
@@ -58,10 +58,25 @@ namespace Flip.AzureBackup.IO
 			return Path.Combine(paths);
 		}
 
-		public void EnsureDirectories(string fullPath)
+		public void EnsureFileDirectory(string fullPath)
 		{
 			string directory = Path.GetDirectoryName(fullPath);
 			CreateDirectoryIfNotExists(directory);
+		}
+
+		private static string GetFullPath(FileInfo fileInfo)
+		{
+			return Path.Combine(fileInfo.Directory.ToString(), fileInfo.ToString());
+		}
+
+		private static string GetRelativePath(FileInfo fileInfo, string basePath)
+		{
+			if (!basePath.EndsWith(@"\"))
+			{
+				basePath += @"\";
+			}
+
+			return GetFullPath(fileInfo).Substring(basePath.Length);
 		}
 	}
 }

@@ -30,26 +30,21 @@ namespace Flip.AzureBackup
 			}
 		}
 
-		public static string GetRelativeFilePath(this CloudBlob blob)
+		public static Uri GetRelativeFileUri(this CloudBlob blob)
 		{
-			return System.Net.WebUtility.HtmlDecode(blob.Metadata[fileRelativePathKey]);
-		}
-
-		public static void SetRelativeFilePath(this CloudBlob blob, string relativePath)
-		{
-			blob.Metadata[fileRelativePathKey] = System.Net.WebUtility.HtmlEncode(relativePath);
+			string filePath = blob.Uri.OriginalString.Substring(blob.Container.Uri.OriginalString.Length + 1);
+			filePath = Uri.UnescapeDataString(filePath);
+			return new Uri(filePath, UriKind.Relative);
 		}
 
 		public static void UploadFile(this CloudBlob blob, FileInformation fileInfo)
 		{
 			blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, false);
-			blob.SetRelativeFilePath(fileInfo.RelativePath);
 			blob.UploadFile(fileInfo.FullPath);
 		}
 
 
 
-		private const string fileRelativePathKey = "FileRelativePath";
 		private const string fileLastModifiedUtcKey = "FileLastModifiedUtcTicks";
 	}
 }

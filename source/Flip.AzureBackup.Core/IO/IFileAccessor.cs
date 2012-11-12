@@ -14,6 +14,6 @@ namespace Flip.AzureBackup.IO
 		void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc);
 		void DeleteFile(string path);
 		string Combine(params string[] paths);
-		void EnsureDirectories(string fullPath);
+		void EnsureFileDirectory(string fullPath);
 	}
 }

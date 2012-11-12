@@ -55,7 +55,6 @@
     <Compile Include="CloudBlobExtensions.cs" />
     <Compile Include="Providers\DownloadSyncronizationProvider.cs" />
     <Compile Include="Providers\UploadSyncronizationProvider.cs" />
-    <Compile Include="IO\FileInfoExtensions.cs" />
     <Compile Include="IO\FileAccessor.cs" />
     <Compile Include="IO\IFileAccessor.cs" />
     <Compile Include="IO\FileInformation.cs" />
