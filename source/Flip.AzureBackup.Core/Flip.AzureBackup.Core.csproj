@@ -60,9 +60,16 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\TextWriterLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SynchronizationAction.cs" />
     <Compile Include="Synchronizer.cs" />
+    <Compile Include="SyncronizationSettings.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj">
+      <Project>{52ab4da0-6ddc-41d2-887d-c1a7caeb8cdd}</Project>
+      <Name>Flip.Common.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>

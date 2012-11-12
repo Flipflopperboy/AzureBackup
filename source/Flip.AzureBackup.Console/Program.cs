@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using Flip.AzureBackup.Console.Configuration;
 using NDesk.Options;
 
@@ -10,28 +11,40 @@ namespace Flip.AzureBackup.Console
 	{
 		static void Main(string[] args)
 		{
-			Arguments arguments;
-			if (ParseArguments(args, out arguments))
+			SyncronizationSettings settings;
+			if (ParseSettings(args, out settings))
 			{
 				IContainer container = ContainerConfiguration.CreateContainer();
 				var synchronizer = container.Resolve<ISynchronizer>();
-				synchronizer.Synchronize(arguments.CloudConnectionString, arguments.ContainerName, arguments.DirectoryPath);
+				synchronizer.Synchronize(settings);
 			}
 			System.Console.ReadKey();
 		}
 
 
 
-		private static bool ParseArguments(string[] args, out Arguments arguments)
+		private static bool ParseSettings(string[] args, out SyncronizationSettings settings)
 		{
-			arguments = null;
-			var parsedArguments = new Arguments();
+			settings = null;
+			var parsedSettings = new SyncronizationSettings();
+			bool actionOk = false;
+			string actionValue = null;
 
 			var options = new OptionSet();
 			options.Add("h|help", "Shows help page", v => ShowHelp(options))
-					.Add("c|connectionString=", "Storage account connection string", v => parsedArguments.CloudConnectionString = v)
-				   .Add("b|blobContainer=", "Azure blob container name", v => parsedArguments.ContainerName = v)
-				   .Add("d|directory=", "Absolute path to directory to synchronize", v => parsedArguments.DirectoryPath = v);
+					.Add("c|connectionString=", "Storage account connection string", v => parsedSettings.CloudConnectionString = v)
+				   .Add("b|blobContainer=", "Azure blob container name", v => parsedSettings.ContainerName = v)
+				   .Add("d|directory=", "Absolute path to directory to synchronize", v => parsedSettings.DirectoryPath = v)
+				   .Add("a|action=", "Action to perform", v =>
+					   {
+						   actionValue = v;
+						   SynchronizationAction action;
+						   if (Enum.TryParse<SynchronizationAction>(v, out action))
+						   {
+							   parsedSettings.Action = action;
+							   actionOk = true;
+						   }
+					   });
 
 			try
 			{
@@ -45,33 +58,40 @@ namespace Flip.AzureBackup.Console
 				return false;
 			}
 
-			bool argumentMissing = false;
-			if (string.IsNullOrEmpty(parsedArguments.CloudConnectionString))
+			bool hasError = false;
+
+			if (string.IsNullOrEmpty(parsedSettings.CloudConnectionString))
 			{
 				System.Console.WriteLine("Missing argument 'c|connectionString'.");
-				argumentMissing = true;
+				hasError = true;
 			}
 
-			if (string.IsNullOrEmpty(parsedArguments.ContainerName))
+			if (string.IsNullOrEmpty(parsedSettings.ContainerName))
 			{
 				System.Console.WriteLine("Missing argument 'b|blobContainer'.");
-				argumentMissing = true;
+				hasError = true;
 			}
 
-			if (string.IsNullOrEmpty(parsedArguments.DirectoryPath))
+			if (string.IsNullOrEmpty(parsedSettings.DirectoryPath))
 			{
 				System.Console.WriteLine("Missing argument 'd|directory'.");
-				argumentMissing = true;
+				hasError = true;
 			}
 
-			if (argumentMissing)
+			if (!actionOk)
+			{
+				System.Console.WriteLine("Invalid action '" + actionValue + "'.");
+				//System.Console.WriteLine("Valid values are [" + Enum.GetNames(typeof(SynchronizationAction)).ToSeparatedString("|") + "].");
+			}
+
+			if (hasError)
 			{
 				ShowTryMessage();
 				System.Console.ReadKey();
 				return false;
 			}
 
-			arguments = parsedArguments;
+			settings = parsedSettings;
 
 			return true;
 		}
@@ -88,15 +108,6 @@ namespace Flip.AzureBackup.Console
 			System.Console.WriteLine("Options:");
 			options.WriteOptionDescriptions(System.Console.Out);
 			System.Console.ReadKey();
-		}
-
-
-
-		private class Arguments
-		{
-			public string ContainerName { get; set; }
-			public string DirectoryPath { get; set; }
-			public string CloudConnectionString { get; set; }
 		}
 	}
 }

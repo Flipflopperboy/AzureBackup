@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C2C8A7
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flip.Common", "Flip.Common", "{30D2A228-9D36-49CC-804A-75719D1E76D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flip.Common.Core", "..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj", "{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,8 +30,15 @@ Global
 		{F5A44281-E1CA-434F-A695-506F1EB0468F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5A44281-E1CA-434F-A695-506F1EB0468F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5A44281-E1CA-434F-A695-506F1EB0468F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD} = {30D2A228-9D36-49CC-804A-75719D1E76D5}
 	EndGlobalSection
 EndGlobal

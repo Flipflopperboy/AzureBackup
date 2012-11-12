@@ -20,25 +20,25 @@ namespace Flip.AzureBackup
 
 
 
-		public void Synchronize(string cloudConnectionString, string containerName, string directoryPath)
+		public void Synchronize(SyncronizationSettings settings)
 		{
-			if (!this._fileAccessor.DirectoryExists(directoryPath))
+			if (!this._fileAccessor.DirectoryExists(settings.DirectoryPath))
 			{
-				System.Console.WriteLine("Directory does not exist '" + directoryPath + "'.");
+				System.Console.WriteLine("Directory does not exist '" + settings.DirectoryPath + "'.");
 				return;
 			}
 
 			Dictionary<string, FileInformation> files = this._fileAccessor
-				.GetFileInfoIncludingSubDirectories(directoryPath)
+				.GetFileInfoIncludingSubDirectories(settings.DirectoryPath)
 				.ToDictionary(file => file.FullPath, file => file);
 
 			if (files.Count > 0)
 			{
 				CloudStorageAccount cloudStorageAccount;
-				if (CloudStorageAccount.TryParse(cloudConnectionString, out cloudStorageAccount))
+				if (CloudStorageAccount.TryParse(settings.CloudConnectionString, out cloudStorageAccount))
 				{
 					CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
-					CloudBlobContainer blobContainer = blobClient.GetContainerReference(containerName);
+					CloudBlobContainer blobContainer = blobClient.GetContainerReference(settings.ContainerName);
 
 					blobContainer.CreateIfNotExist();
 
@@ -46,7 +46,7 @@ namespace Flip.AzureBackup
 				}
 				else
 				{
-					this._logger.WriteLine("Invalid cloud connection string '" + cloudConnectionString + "'.");
+					this._logger.WriteLine("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
 				}
 			}
 			else
@@ -91,7 +91,7 @@ namespace Flip.AzureBackup
 						}
 					}
 
-					//Only keep blobs which should be deleted
+					//Only keep blobs in dictionary which should be deleted from cloud
 					blobs.Remove(blobUri);
 				}
 				else
@@ -125,7 +125,7 @@ namespace Flip.AzureBackup
 			WriteFixedLine("New files:", statistics.NewFileCount, length);
 			WriteFixedLine("Modified files:", statistics.UpdatedFileCount, length);
 			WriteFixedLine("Changed date files:", statistics.UpdatedModifiedDateCount, length);
-			WriteFixedLine("Deleted files:", statistics.DeletedFileCount, length);			
+			WriteFixedLine("Deleted files:", statistics.DeletedFileCount, length);
 			this._logger.WriteLine("".PadLeft(length, '-'));
 			this._logger.WriteLine("");
 		}

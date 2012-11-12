@@ -2,6 +2,6 @@
 {
 	public interface ISynchronizer
 	{
-		void Synchronize(string cloudConnectionString, string containerName, string directoryPath);
+		void Synchronize(SyncronizationSettings settings);
 	}
 }

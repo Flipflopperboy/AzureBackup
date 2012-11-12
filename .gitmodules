@@ -1,0 +1,3 @@
+[submodule "externals/Flip.Common"]
+	path = externals/Flip.Common
+	url = git@github.com:Flipflopperboy/Common.git
