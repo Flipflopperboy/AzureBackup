@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.Providers;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
@@ -42,13 +43,13 @@ namespace Flip.AzureBackup
 
 					blobContainer.CreateIfNotExist();
 
-					Actions actions = settings.Action == SynchronizationAction.Upload ?
-						UploadActions :
-						AnalyzeActions;
+					ISyncronizationProvider provider = settings.Action == SynchronizationAction.Upload ?
+						(ISyncronizationProvider)new UploadSyncronizationProvider(this._logger) :
+						(ISyncronizationProvider)new AnalysisSyncronizationProvider(this._logger);
 
-					actions.WriteStart(this._logger);
+					provider.WriteStart();
 
-					SynchronizeToCloud(files, blobContainer, actions);
+					SynchronizeToCloud(files, blobContainer, provider);
 				}
 				else
 				{
@@ -66,7 +67,7 @@ namespace Flip.AzureBackup
 		private void SynchronizeToCloud(
 			Dictionary<string, FileInformation> files,
 			CloudBlobContainer blobContainer,
-			Actions actions)
+			ISyncronizationProvider provider)
 		{
 			var statistics = new SyncronizationStatistics();
 
@@ -90,23 +91,24 @@ namespace Flip.AzureBackup
 						if (contentMD5 == blob.Properties.ContentMD5)
 						{
 							statistics.UpdatedModifiedDateCount++;
-							actions.UpdateBlobmodifiedDate(blob, fileInfo);
+							provider.UpdateBlobModifiedDate(blob, fileInfo);
 							this._logger.WriteLine("Updating changed date for " + path + "...");
 						}
 						else
 						{
 							statistics.UpdatedFileCount++;
-							actions.UpdateBlob(blob, fileInfo, path);
+							provider.UpdateBlob(blob, fileInfo, path);
+							this._logger.WriteLine("Updating blob " + blob.Uri.ToString() + "...");
 						}
 					}
 
-					//Only keep blobs in dictionary which should be deleted from cloud
+					//Only keep blobs which are both on disc and in cloud
 					blobs.Remove(blobUri);
 				}
 				else
 				{
 					statistics.NewFileCount++;
-					actions.CreateBlob(blobContainer, fileInfo, path);
+					provider.CreateBlob(blobContainer, fileInfo, path);
 				}
 			}
 
@@ -115,7 +117,7 @@ namespace Flip.AzureBackup
 			foreach (var item in blobs)
 			{
 				this._logger.WriteLine("Deleting " + item.Key.AbsolutePath + "...");
-				actions.DeleteBlob(item.Value);
+				provider.DeleteBlob(item.Value);
 			}
 
 			WriteStatistics(statistics);
@@ -149,37 +151,6 @@ namespace Flip.AzureBackup
 			UseFlatBlobListing = true,
 			BlobListingDetails = BlobListingDetails.Metadata
 		};
-		private static readonly Actions UploadActions = new Actions()
-		{
-			WriteStart = logger => logger.WriteLine("UPLOAD"),
-			CreateBlob = (blobContainer, fileInfo, path) =>
-			{
-				CloudBlob blob = blobContainer.GetBlobReference(path);
-				blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
-			},
-			UpdateBlob = (blob, fileInfo, path) =>
-			{
-				blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
-			},
-			UpdateBlobmodifiedDate = (blob, fileInfo) => blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true),
-			DeleteBlob = blob => blob.DeleteIfExists()
-		};
-		private static readonly Actions AnalyzeActions = new Actions()
-		{
-			WriteStart = logger => logger.WriteLine("ANALYSIS"),
-			CreateBlob = (blobContainer, fileInfo, path) => { },
-			UpdateBlob = (blob, fileInfo, path) => { },
-			UpdateBlobmodifiedDate = (blob, fileInfo) => { },
-			DeleteBlob = blob => { }
-		};
-		private class Actions
-		{
-			public Action<ILogger> WriteStart;
-			public Action<CloudBlobContainer, FileInformation, string> CreateBlob;
-			public Action<CloudBlob, FileInformation, string> UpdateBlob;
-			public Action<CloudBlob, FileInformation> UpdateBlobmodifiedDate;
-			public Action<CloudBlob> DeleteBlob;
-		}
 		private class SyncronizationStatistics
 		{
 			public int NewFileCount { get; set; }

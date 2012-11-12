@@ -50,13 +50,16 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="Providers\AnalysisSyncronizationProvider.cs" />
     <Compile Include="CloudBlobContainerExtensions.cs" />
     <Compile Include="CloudBlobExtensions.cs" />
+    <Compile Include="Providers\UploadSyncronizationProvider.cs" />
     <Compile Include="IO\FileInfoExtensions.cs" />
     <Compile Include="IO\FileAccessor.cs" />
     <Compile Include="IO\IFileAccessor.cs" />
     <Compile Include="IO\FileInformation.cs" />
     <Compile Include="ISynchronizer.cs" />
+    <Compile Include="Providers\ISyncronizationProvider.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\TextWriterLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
