@@ -125,6 +125,7 @@ namespace Flip.AzureBackup
 		private void WriteStatistics(SyncronizationStatistics statistics)
 		{
 			int length = 30;
+			this._logger.WriteLine("");
 			this._logger.WriteLine("".PadLeft(length, '-'));
 			WriteFixedLine("New files:", statistics.NewFileCount, length);
 			WriteFixedLine("Modified files:", statistics.UpdatedFileCount, length);
@@ -150,10 +151,7 @@ namespace Flip.AzureBackup
 		};
 		private static readonly Actions UploadActions = new Actions()
 		{
-			WriteStart = logger => {
-				logger.WriteLine("UPLOAD");
-				logger.WriteLine("");
-			},
+			WriteStart = logger => logger.WriteLine("UPLOAD"),
 			CreateBlob = (blobContainer, fileInfo, path) =>
 			{
 				CloudBlob blob = blobContainer.GetBlobReference(path);
@@ -168,11 +166,7 @@ namespace Flip.AzureBackup
 		};
 		private static readonly Actions AnalyzeActions = new Actions()
 		{
-			WriteStart = logger => 
-			{
-				logger.WriteLine("ANALYSIS");
-				logger.WriteLine("");
-			},
+			WriteStart = logger => logger.WriteLine("ANALYSIS"),
 			CreateBlob = (blobContainer, fileInfo, path) => { },
 			UpdateBlob = (blob, fileInfo, path) => { },
 			UpdateBlobmodifiedDate = (blob, fileInfo) => { },
