@@ -23,19 +23,24 @@ namespace Flip.AzureBackup.Providers
 
 
 
-		public void CreateBlob(CloudBlobContainer blobContainer, FileInformation fileInfo, string path)
+		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
+		{
+			return fileInfo.LastWriteTimeUtc > blob.GetFileLastModifiedUtc();
+		}
+
+		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
 		}
 
-		public void UpdateBlob(CloudBlob blob, FileInformation fileInfo, string path)
+		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
 		{
 		}
 
-		public void UpdateBlobModifiedDate(CloudBlob blob, FileInformation fileInfo)
+		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
 		}
 
-		public void DeleteBlob(CloudBlob blob)
+		public void HandleFileNotExists(CloudBlob blob)
 		{
 		}
 

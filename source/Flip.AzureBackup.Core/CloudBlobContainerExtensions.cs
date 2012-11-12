@@ -5,7 +5,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup
 {
-	public static class CloudBlobContainerExtensions
+	internal static class CloudBlobContainerExtensions
 	{
 		public static Uri GetBlobUri(this CloudBlobContainer container, string path)
 		{

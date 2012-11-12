@@ -8,9 +8,10 @@ namespace Flip.AzureBackup.Providers
 	public interface ISyncronizationProvider
 	{
 		void WriteStart();
-		void CreateBlob(CloudBlobContainer blobContainer, FileInformation fileInfo, string path);
-		void UpdateBlob(CloudBlob blob, FileInformation fileInfo, string path);
-		void UpdateBlobModifiedDate(CloudBlob blob, FileInformation fileInfo);
-		void DeleteBlob(CloudBlob blob);
+		bool HasBeenModified(CloudBlob blob, FileInformation fileInfo);
+		void HandleUpdate(CloudBlob blob, FileInformation fileInfo);
+		void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo);
+		void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo);
+		void HandleFileNotExists(CloudBlob blob);
 	}
 }

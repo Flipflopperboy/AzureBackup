@@ -23,24 +23,33 @@ namespace Flip.AzureBackup.Providers
 
 
 
-		public void CreateBlob(CloudBlobContainer blobContainer, FileInformation fileInfo, string path)
+		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
 		{
-			CloudBlob blob = blobContainer.GetBlobReference(path);
-			blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
+			return fileInfo.LastWriteTimeUtc > blob.GetFileLastModifiedUtc();
 		}
 
-		public void UpdateBlob(CloudBlob blob, FileInformation fileInfo, string path)
+		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
-			blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
+			this._logger.WriteLine("Updating blob " + blob.Uri.ToString() + "...");
+			blob.UploadFile(fileInfo.FullPath, fileInfo.LastWriteTimeUtc);
 		}
 
-		public void UpdateBlobModifiedDate(CloudBlob blob, FileInformation fileInfo)
+		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._logger.WriteLine("Updating modification date for blob " + blob.Uri.ToString() + "...");
 			blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true);
 		}
 
-		public void DeleteBlob(CloudBlob blob)
+		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
+			CloudBlob blob = blobContainer.GetBlobReference(fileInfo.FullPath);
+			this._logger.WriteLine("Uploading file " + fileInfo.FullPath + " to blob " + blob.Uri.ToString() + "...");
+			blob.UploadFile(fileInfo.FullPath, fileInfo.LastWriteTimeUtc);
+		}
+
+		public void HandleFileNotExists(CloudBlob blob)
+		{
+			this._logger.WriteLine("Deleting blob " + blob.Uri.ToString() + "...");
 			blob.DeleteIfExists();
 		}
 

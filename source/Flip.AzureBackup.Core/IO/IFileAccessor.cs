@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 
 
@@ -9,5 +10,7 @@ namespace Flip.AzureBackup.IO
 		IEnumerable<FileInformation> GetFileInfoIncludingSubDirectories(string directoryPath);
 		bool DirectoryExists(string directoryPath);
 		string GetMD5HashForFile(string path);
+		void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc);
+		void DeleteFile(string path);
 	}
 }

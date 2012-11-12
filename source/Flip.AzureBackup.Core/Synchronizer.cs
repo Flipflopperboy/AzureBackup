@@ -29,9 +29,8 @@ namespace Flip.AzureBackup
 				return;
 			}
 
-			Dictionary<string, FileInformation> files = this._fileAccessor
-				.GetFileInfoIncludingSubDirectories(settings.DirectoryPath)
-				.ToDictionary(file => file.FullPath, file => file);
+			List<FileInformation> files = this._fileAccessor
+				.GetFileInfoIncludingSubDirectories(settings.DirectoryPath).ToList();
 
 			if (files.Count > 0)
 			{
@@ -50,6 +49,8 @@ namespace Flip.AzureBackup
 					provider.WriteStart();
 
 					SynchronizeToCloud(files, blobContainer, provider);
+
+					this._logger.WriteLine("Done...");
 				}
 				else
 				{
@@ -65,7 +66,7 @@ namespace Flip.AzureBackup
 
 
 		private void SynchronizeToCloud(
-			Dictionary<string, FileInformation> files,
+			List<FileInformation> files,
 			CloudBlobContainer blobContainer,
 			ISyncronizationProvider provider)
 		{
@@ -75,40 +76,33 @@ namespace Flip.AzureBackup
 				.Cast<CloudBlob>()
 				.ToDictionary(blob => blob.Uri, blob => blob);
 
-			foreach (var pair in files)
+			foreach (var fileInfo in files)
 			{
-				string path = pair.Key;
-				FileInformation fileInfo = pair.Value;
-
-				var blobUri = blobContainer.GetBlobUri(path);
+				var blobUri = blobContainer.GetBlobUri(fileInfo.FullPath);
 				if (blobs.ContainsKey(blobUri))
 				{
 					CloudBlob blob = blobs[blobUri];
-					DateTime blobFileLastModifiedUtc = blob.GetFileLastModifiedUtc();
-					if (fileInfo.LastWriteTimeUtc > blobFileLastModifiedUtc)
+					if (provider.HasBeenModified(blob, fileInfo))
 					{
-						string contentMD5 = this._fileAccessor.GetMD5HashForFile(path);
+						string contentMD5 = this._fileAccessor.GetMD5HashForFile(fileInfo.FullPath);
 						if (contentMD5 == blob.Properties.ContentMD5)
 						{
 							statistics.UpdatedModifiedDateCount++;
-							provider.UpdateBlobModifiedDate(blob, fileInfo);
-							this._logger.WriteLine("Updating changed date for " + path + "...");
+							provider.HandleUpdateModifiedDate(blob, fileInfo);
 						}
 						else
 						{
 							statistics.UpdatedFileCount++;
-							provider.UpdateBlob(blob, fileInfo, path);
-							this._logger.WriteLine("Updating blob " + blob.Uri.ToString() + "...");
+							provider.HandleUpdate(blob, fileInfo);
 						}
 					}
 
-					//Only keep blobs which are both on disc and in cloud
 					blobs.Remove(blobUri);
 				}
 				else
 				{
 					statistics.NewFileCount++;
-					provider.CreateBlob(blobContainer, fileInfo, path);
+					provider.HandleBlobNotExists(blobContainer, fileInfo);
 				}
 			}
 
@@ -116,12 +110,10 @@ namespace Flip.AzureBackup
 
 			foreach (var item in blobs)
 			{
-				this._logger.WriteLine("Deleting " + item.Key.AbsolutePath + "...");
-				provider.DeleteBlob(item.Value);
+				provider.HandleFileNotExists(item.Value);
 			}
 
 			WriteStatistics(statistics);
-			this._logger.WriteLine("Done...");
 		}
 
 		private void WriteStatistics(SyncronizationStatistics statistics)

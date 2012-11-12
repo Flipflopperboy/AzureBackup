@@ -6,7 +6,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup
 {
-	public static class CloudBlobExtensions
+	internal static class CloudBlobExtensions
 	{
 		//public static bool Exists(this CloudBlob blob)
 		//{

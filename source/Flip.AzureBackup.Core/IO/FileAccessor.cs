@@ -34,5 +34,15 @@ namespace Flip.AzureBackup.IO
 			}
 			return Convert.ToBase64String(hash);
 		}
+
+		public void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+		{
+			File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+		}
+
+		public void DeleteFile(string path)
+		{
+			File.Delete(path);
+		}
 	}
 }
