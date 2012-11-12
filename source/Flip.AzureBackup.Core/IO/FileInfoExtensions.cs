@@ -2,7 +2,7 @@
 
 
 
-namespace Flip.AzureBackup
+namespace Flip.AzureBackup.IO
 {
 	public static class FileInfoExtensions
 	{

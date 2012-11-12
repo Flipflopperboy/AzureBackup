@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.StorageClient;
+﻿using Autofac;
+using Flip.AzureBackup.Console.Configuration;
+using NDesk.Options;
 
 
 
@@ -14,101 +10,93 @@ namespace Flip.AzureBackup.Console
 	{
 		static void Main(string[] args)
 		{
-			string containerName = "backup";
-			string directoryPath = @"C:\temp\backup";
-			var directoryInfo = new DirectoryInfo(directoryPath);
-			Dictionary<string, FileInfo> files = directoryInfo
-				.GetFiles("*", SearchOption.AllDirectories)
-				.ToDictionary(info => info.GetFullPath(), info => info);
-
-			if (files.Count > 0)
+			Arguments arguments;
+			if (ParseArguments(args, out arguments))
 			{
-				CloudStorageAccount cloudStorageAccount = CloudStorageAccount.DevelopmentStorageAccount;
-				CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
-				CloudBlobContainer blobContainer = blobClient.GetContainerReference(containerName);
-
-				blobContainer.CreateIfNotExist();
-
-				ProcessFileUploads(files, blobContainer);
-			}
-			else
-			{
-				System.Console.WriteLine("Inga filer");
+				IContainer container = ContainerConfiguration.CreateContainer();
+				var synchronizer = container.Resolve<ISynchronizer>();
+				synchronizer.Synchronize(arguments.CloudConnectionString, arguments.ContainerName, arguments.DirectoryPath);
 			}
 			System.Console.ReadKey();
 		}
 
-		private static void ProcessFileUploads(Dictionary<string, FileInfo> files, CloudBlobContainer blobContainer)
+
+
+		private static bool ParseArguments(string[] args, out Arguments arguments)
 		{
-			Dictionary<Uri, CloudBlob> blobs = blobContainer.ListBlobs(blobRequestOptions)
-				.Cast<CloudBlob>()
-				.ToDictionary(blob => blob.Uri, blob => blob);
+			arguments = null;
+			var parsedArguments = new Arguments();
 
-			foreach (KeyValuePair<string, FileInfo> pair in files)
+			var options = new OptionSet();
+			options.Add("h|help", "Shows help page", v => ShowHelp(options))
+					.Add("c|connectionString=", "Storage account connection string", v => parsedArguments.CloudConnectionString = v)
+				   .Add("b|blobContainer=", "Azure blob container name", v => parsedArguments.ContainerName = v)
+				   .Add("d|directory=", "Absolute path to directory to synchronize", v => parsedArguments.DirectoryPath = v);
+
+			try
 			{
-				string path = pair.Key;
-				FileInfo fileInfo = pair.Value;
-
-				var blobUri = blobContainer.GetBlobUri(path);
-				if (blobs.ContainsKey(blobUri))
-				{
-					CloudBlob blob = blobs[blobUri];
-					DateTime blobFileLastModifiedUtc = blob.GetFileLastModifiedUtc();
-					if (fileInfo.LastWriteTimeUtc > blobFileLastModifiedUtc)
-					{
-						string contentMD5 = GetMD5HashForFile(path);
-						if (contentMD5 == blob.Properties.ContentMD5)
-						{
-							blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true);
-							System.Console.WriteLine("Uppdaterar senast ändrat datum för " + path + "...");
-						}
-						else
-						{
-							blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
-						}
-					}
-
-					//Only keep blobs which should be deleted
-					blobs.Remove(blobUri);
-				}
-				else
-				{
-					CloudBlob blob = blobContainer.GetBlobReference(path);
-					blob.UploadFile(path, fileInfo.LastWriteTimeUtc);
-				}
+				options.Parse(args);
+			}
+			catch (OptionException e)
+			{
+				System.Console.WriteLine(e.Message);
+				ShowTryMessage();
+				System.Console.ReadKey();
+				return false;
 			}
 
-			ProcessBlobDeletions(blobs);
-
-			System.Console.WriteLine("Klart...");
-		}
-
-		private static void ProcessBlobDeletions(Dictionary<Uri, CloudBlob> blobs)
-		{
-			foreach (var item in blobs)
+			bool argumentMissing = false;
+			if (string.IsNullOrEmpty(parsedArguments.CloudConnectionString))
 			{
-				System.Console.WriteLine("Deleting " + item.Key.AbsolutePath + "...");
-				item.Value.DeleteIfExists();
+				System.Console.WriteLine("Missing argument 'c|connectionString'.");
+				argumentMissing = true;
 			}
-		}
 
-		private static string GetMD5HashForFile(string path)
-		{
-			byte[] hash = null;
-			using (FileStream file = new FileStream(path, FileMode.Open))
+			if (string.IsNullOrEmpty(parsedArguments.ContainerName))
 			{
-				MD5 md5 = new MD5CryptoServiceProvider();
-				hash = md5.ComputeHash(file);
+				System.Console.WriteLine("Missing argument 'b|blobContainer'.");
+				argumentMissing = true;
 			}
-			return Convert.ToBase64String(hash);
+
+			if (string.IsNullOrEmpty(parsedArguments.DirectoryPath))
+			{
+				System.Console.WriteLine("Missing argument 'd|directory'.");
+				argumentMissing = true;
+			}
+
+			if (argumentMissing)
+			{
+				ShowTryMessage();
+				System.Console.ReadKey();
+				return false;
+			}
+
+			arguments = parsedArguments;
+
+			return true;
+		}
+
+		private static void ShowTryMessage()
+		{
+			System.Console.WriteLine("Try AzureBackup --help' for more information.");
+		}
+
+		private static void ShowHelp(OptionSet options)
+		{
+			System.Console.WriteLine("Usage: AzureBackup [OPTIONS]");
+			System.Console.WriteLine();
+			System.Console.WriteLine("Options:");
+			options.WriteOptionDescriptions(System.Console.Out);
+			System.Console.ReadKey();
 		}
 
 
 
-		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
+		private class Arguments
 		{
-			UseFlatBlobListing = true,
-			BlobListingDetails = BlobListingDetails.Metadata
-		};
+			public string ContainerName { get; set; }
+			public string DirectoryPath { get; set; }
+			public string CloudConnectionString { get; set; }
+		}
 	}
 }
