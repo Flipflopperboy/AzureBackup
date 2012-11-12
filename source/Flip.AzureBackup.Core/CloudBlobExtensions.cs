@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using Flip.AzureBackup.IO;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -8,25 +8,6 @@ namespace Flip.AzureBackup
 {
 	internal static class CloudBlobExtensions
 	{
-		//public static bool Exists(this CloudBlob blob)
-		//{
-		//	try
-		//	{
-		//		blob.FetchAttributes();
-		//		return true;
-		//	}
-		//	catch (StorageClientException e)
-		//	{
-		//		if (e.ErrorCode == StorageErrorCode.ResourceNotFound)
-		//		{
-		//			return false;
-		//		}
-		//		else
-		//		{
-		//			throw;
-		//		}
-		//	}
-		//}
 		public static void SetFileLastModifiedUtc(this CloudBlob blob, DateTime fileLastModifiedUtc, bool update)
 		{
 			blob.Metadata[fileLastModifiedUtcKey] = fileLastModifiedUtc.Ticks.ToString();
@@ -35,6 +16,7 @@ namespace Flip.AzureBackup
 				blob.SetMetadata();
 			}
 		}
+
 		public static DateTime GetFileLastModifiedUtc(this CloudBlob blob)
 		{
 			long ticks;
@@ -47,16 +29,27 @@ namespace Flip.AzureBackup
 				return DateTime.MinValue.ToUniversalTime();
 			}
 		}
-		public static void UploadFile(this CloudBlob blob, string path, DateTime lastWriteTimeUtc)
+
+		public static string GetRelativeFilePath(this CloudBlob blob)
 		{
-			Console.WriteLine("Laddar upp fil " + path + " ...");
-			blob.SetFileLastModifiedUtc(lastWriteTimeUtc, false);
-			try
-			{
-				blob.UploadFile(path);
-			}
-			catch (FileNotFoundException) { /**/ }
+			return System.Net.WebUtility.HtmlDecode(blob.Metadata[fileRelativePathKey]);
 		}
+
+		public static void SetRelativeFilePath(this CloudBlob blob, string relativePath)
+		{
+			blob.Metadata[fileRelativePathKey] = System.Net.WebUtility.HtmlEncode(relativePath);
+		}
+
+		public static void UploadFile(this CloudBlob blob, FileInformation fileInfo)
+		{
+			blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, false);
+			blob.SetRelativeFilePath(fileInfo.RelativePath);
+			blob.UploadFile(fileInfo.FullPath);
+		}
+
+
+
+		private const string fileRelativePathKey = "FileRelativePath";
 		private const string fileLastModifiedUtcKey = "FileLastModifiedUtcTicks";
 	}
 }

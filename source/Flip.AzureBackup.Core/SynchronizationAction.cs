@@ -2,7 +2,7 @@
 {
 	public enum SynchronizationAction
 	{
-		Analyze,
+		Analysis,
 		Upload,
 		Download
 	}

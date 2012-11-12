@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Microsoft.WindowsAzure.StorageClient;
@@ -22,7 +23,16 @@ namespace Flip.AzureBackup.Providers
 			this._logger.WriteLine("DOWNLOAD");
 		}
 
+		public bool InitializeDirectory(string path)
+		{
+			this._fileAccessor.CreateDirectoryIfNotExists(path);
+			return true;
+		}
 
+		public bool NeedToCheckCloud(List<FileInformation> files)
+		{
+			return true;
+		}
 
 		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
 		{
@@ -31,7 +41,7 @@ namespace Flip.AzureBackup.Providers
 
 		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
-			this._logger.WriteLine("Downloading file " + blob.Uri.ToString() + "...");
+			this._logger.WriteLine("Downloading updated file " + blob.Uri.ToString() + "...");
 			blob.DownloadToFile(fileInfo.FullPath);
 		}
 
@@ -47,10 +57,13 @@ namespace Flip.AzureBackup.Providers
 			this._fileAccessor.DeleteFile(fileInfo.FullPath);
 		}
 
-		public void HandleFileNotExists(CloudBlob blob)
+		public void HandleFileNotExists(CloudBlob blob, string basePath)
 		{
-			//Download - create
-			//blob.DeleteIfExists();
+			string relativePath = blob.GetRelativeFilePath();
+			string fullPath = this._fileAccessor.Combine(basePath, relativePath);
+			this._logger.WriteLine("Downloading new file " + fullPath + "...");
+			this._fileAccessor.EnsureDirectories(fullPath);
+			blob.DownloadToFile(fullPath);
 		}
 
 

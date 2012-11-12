@@ -16,12 +16,20 @@ namespace Flip.AzureBackup.IO
 
 			return directoryInfo
 				.GetFiles("*", SearchOption.AllDirectories)
-				.Select(file => new FileInformation(file.GetFullPath(), file.LastWriteTimeUtc));
+				.Select(file => new FileInformation(file.GetFullPath(), file.GetRelativePath(directoryPath), file.LastWriteTimeUtc));
 		}
 
 		public bool DirectoryExists(string directoryPath)
 		{
 			return Directory.Exists(directoryPath);
+		}
+
+		public void CreateDirectoryIfNotExists(string path)
+		{
+			if (!Directory.Exists(path))
+			{
+				Directory.CreateDirectory(path);
+			}
 		}
 
 		public string GetMD5HashForFile(string path)
@@ -43,6 +51,17 @@ namespace Flip.AzureBackup.IO
 		public void DeleteFile(string path)
 		{
 			File.Delete(path);
+		}
+
+		public string Combine(params string[] paths)
+		{
+			return Path.Combine(paths);
+		}
+
+		public void EnsureDirectories(string fullPath)
+		{
+			string directory = Path.GetDirectoryName(fullPath);
+			CreateDirectoryIfNotExists(directory);
 		}
 	}
 }

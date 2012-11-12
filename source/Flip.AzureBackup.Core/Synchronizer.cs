@@ -23,49 +23,43 @@ namespace Flip.AzureBackup
 
 		public void Synchronize(SyncronizationSettings settings)
 		{
-			if (!this._fileAccessor.DirectoryExists(settings.DirectoryPath))
+			ISyncronizationProvider provider = GetProvider(settings.Action);
+
+			if (!provider.InitializeDirectory(settings.DirectoryPath))
 			{
-				System.Console.WriteLine("Directory does not exist '" + settings.DirectoryPath + "'.");
 				return;
 			}
 
 			List<FileInformation> files = this._fileAccessor
 				.GetFileInfoIncludingSubDirectories(settings.DirectoryPath).ToList();
 
-			if (files.Count > 0)
+			if (!provider.NeedToCheckCloud(files))
 			{
-				CloudStorageAccount cloudStorageAccount;
-				if (CloudStorageAccount.TryParse(settings.CloudConnectionString, out cloudStorageAccount))
-				{
-					CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
-					CloudBlobContainer blobContainer = blobClient.GetContainerReference(settings.ContainerName);
+				return;
+			}
 
-					blobContainer.CreateIfNotExist();
+			CloudStorageAccount cloudStorageAccount;
+			if (CloudStorageAccount.TryParse(settings.CloudConnectionString, out cloudStorageAccount))
+			{
+				CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+				CloudBlobContainer blobContainer = blobClient.GetContainerReference(settings.ContainerName);
 
-					ISyncronizationProvider provider = settings.Action == SynchronizationAction.Upload ?
-						(ISyncronizationProvider)new UploadSyncronizationProvider(this._logger) :
-						(ISyncronizationProvider)new AnalysisSyncronizationProvider(this._logger);
+				blobContainer.CreateIfNotExist();
 
-					provider.WriteStart();
+				provider.WriteStart();
 
-					SynchronizeToCloud(files, blobContainer, provider);
+				SynchronizeToCloud(settings.DirectoryPath, files, blobContainer, provider);
 
-					this._logger.WriteLine("Done...");
-				}
-				else
-				{
-					this._logger.WriteLine("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
-				}
+				this._logger.WriteLine("Done...");
 			}
 			else
 			{
-				this._logger.WriteLine("No files to process...");
-			}
+				this._logger.WriteLine("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
+			}			
 		}
 
-
-
 		private void SynchronizeToCloud(
+			string directoryPath,
 			List<FileInformation> files,
 			CloudBlobContainer blobContainer,
 			ISyncronizationProvider provider)
@@ -78,7 +72,7 @@ namespace Flip.AzureBackup
 
 			foreach (var fileInfo in files)
 			{
-				var blobUri = blobContainer.GetBlobUri(fileInfo.FullPath);
+				var blobUri = blobContainer.GetBlobUri(fileInfo.RelativePath);
 				if (blobs.ContainsKey(blobUri))
 				{
 					CloudBlob blob = blobs[blobUri];
@@ -110,10 +104,23 @@ namespace Flip.AzureBackup
 
 			foreach (var item in blobs)
 			{
-				provider.HandleFileNotExists(item.Value);
+				provider.HandleFileNotExists(item.Value, directoryPath);
 			}
 
 			WriteStatistics(statistics);
+		}
+
+		private ISyncronizationProvider GetProvider(SynchronizationAction action)
+		{
+			switch (action)
+			{
+				case SynchronizationAction.Download:
+					return new DownloadSyncronizationProvider(this._logger, this._fileAccessor);
+				case SynchronizationAction.Upload:
+					return new UploadSyncronizationProvider(this._logger, this._fileAccessor);
+				default:
+					return new AnalysisSyncronizationProvider(this._logger, this._fileAccessor);
+			}
 		}
 
 		private void WriteStatistics(SyncronizationStatistics statistics)
