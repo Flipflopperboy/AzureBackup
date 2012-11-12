@@ -64,6 +64,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj">
+      <Project>{52ab4da0-6ddc-41d2-887d-c1a7caeb8cdd}</Project>
+      <Name>Flip.Common.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Flip.AzureBackup.Core\Flip.AzureBackup.Core.csproj">
       <Project>{f5a44281-e1ca-434f-a695-506f1eb0468f}</Project>
       <Name>Flip.AzureBackup.Core</Name>

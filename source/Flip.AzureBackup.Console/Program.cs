@@ -2,6 +2,7 @@
 using Autofac;
 using Flip.AzureBackup.Console.Configuration;
 using NDesk.Options;
+using Flip.Common;
 
 
 
@@ -81,7 +82,8 @@ namespace Flip.AzureBackup.Console
 			if (!actionOk)
 			{
 				System.Console.WriteLine("Invalid action '" + actionValue + "'.");
-				//System.Console.WriteLine("Valid values are [" + Enum.GetNames(typeof(SynchronizationAction)).ToSeparatedString("|") + "].");
+				System.Console.WriteLine("Valid values are [" + Enum.GetNames(typeof(SynchronizationAction)).ToSeparatedString(n => n, "|") + "].");
+				hasError = true;
 			}
 
 			if (hasError)
@@ -98,6 +100,7 @@ namespace Flip.AzureBackup.Console
 
 		private static void ShowTryMessage()
 		{
+			System.Console.WriteLine("");
 			System.Console.WriteLine("Try AzureBackup --help' for more information.");
 		}
 

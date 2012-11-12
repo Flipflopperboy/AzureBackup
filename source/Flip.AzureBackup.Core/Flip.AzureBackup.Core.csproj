@@ -65,12 +65,6 @@
     <Compile Include="SyncronizationSettings.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj">
-      <Project>{52ab4da0-6ddc-41d2-887d-c1a7caeb8cdd}</Project>
-      <Name>Flip.Common.Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
