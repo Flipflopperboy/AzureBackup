@@ -40,7 +40,7 @@ namespace Flip.AzureBackup.Console
 					   {
 						   actionValue = v;
 						   SynchronizationAction action;
-						   if (Enum.TryParse<SynchronizationAction>(v, out action))
+						   if (Enum.TryParse<SynchronizationAction>(v, true, out action))
 						   {
 							   parsedSettings.Action = action;
 							   actionOk = true;
