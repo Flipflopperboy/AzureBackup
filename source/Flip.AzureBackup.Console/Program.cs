@@ -1,8 +1,8 @@
 ﻿using System;
 using Autofac;
 using Flip.AzureBackup.Console.Configuration;
-using NDesk.Options;
 using Flip.Common;
+using NDesk.Options;
 
 
 
@@ -34,18 +34,18 @@ namespace Flip.AzureBackup.Console
 			var options = new OptionSet();
 			options.Add("h|help", "Shows help page", v => ShowHelp(options))
 					.Add("c|connectionString=", "Storage account connection string", v => parsedSettings.CloudConnectionString = v)
-				   .Add("b|blobContainer=", "Azure blob container name", v => parsedSettings.ContainerName = v)
-				   .Add("d|directory=", "Absolute path to directory to synchronize", v => parsedSettings.DirectoryPath = v)
-				   .Add("a|action=", "Action to perform", v =>
-					   {
-						   actionValue = v;
-						   SynchronizationAction action;
-						   if (Enum.TryParse<SynchronizationAction>(v, true, out action))
-						   {
-							   parsedSettings.Action = action;
-							   actionOk = true;
-						   }
-					   });
+					.Add("b|blobContainer=", "Azure blob container name", v => parsedSettings.ContainerName = v)
+					.Add("d|directory=", "Absolute path to directory to synchronize", v => parsedSettings.DirectoryPath = v)
+					.Add("a|action=", "Action to perform", v =>
+						{
+							actionValue = v;
+							SynchronizationAction action;
+							if (Enum.TryParse<SynchronizationAction>(v, true, out action))
+							{
+								parsedSettings.Action = action;
+								actionOk = true;
+							}
+						});
 
 			try
 			{

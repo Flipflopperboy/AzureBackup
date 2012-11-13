@@ -8,19 +8,31 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup.Providers
 {
-	public sealed class DownloadSyncronizationProvider : ISyncronizationProvider
+	public class DownloadKeepSyncronizationProvider : ISyncronizationProvider
 	{
-		public DownloadSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
+		public DownloadKeepSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
 		{
 			this._logger = logger;
 			this._fileAccessor = fileAccessor;
+			this._statistics = new SyncronizationStatistics();
 		}
 
 
 
-		public void WriteStart()
+		public virtual void WriteStart()
 		{
-			this._logger.WriteLine("DOWNLOAD");
+			this._logger.WriteLine("DOWNLOAD BUT KEEP REMOVED FILES");
+		}
+
+		public virtual void WriteStatistics()
+		{
+			this._logger.WriteLine("");
+			this._logger.WriteFixedLine('-');
+			this._logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+			this._logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+			this._logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+			this._logger.WriteFixedLine('-');
+			this._logger.WriteLine("");
 		}
 
 		public bool InitializeDirectory(string path)
@@ -41,24 +53,29 @@ namespace Flip.AzureBackup.Providers
 
 		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedCount++;
+
 			this._logger.WriteLine("Downloading updated file " + blob.Uri.ToString() + "...");
 			blob.DownloadToFile(fileInfo.FullPath);
 		}
 
 		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedModifiedDateCount++;
+
 			this._logger.WriteLine("Updating modification date for file " + fileInfo.FullPath + "...");
 			this._fileAccessor.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
 		}
 
-		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
+		public virtual void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
-			this._logger.WriteLine("Deleting file " + fileInfo.FullPath + "...");
-			this._fileAccessor.DeleteFile(fileInfo.FullPath);
+			this._logger.WriteLine("File no longer in cloud " + fileInfo.FullPath + "...");
 		}
 
 		public void HandleFileNotExists(CloudBlob blob, string basePath)
 		{
+			this._statistics.FileNotExistCount++;
+
 			Uri relativeUri = blob.GetRelativeFileUri();
 			Uri baseUri = new Uri(basePath);
 			Uri fullUri = new Uri(baseUri, relativeUri);
@@ -66,12 +83,14 @@ namespace Flip.AzureBackup.Providers
 
 			this._logger.WriteLine("Downloading new file " + fullPath + "...");
 			this._fileAccessor.EnsureFileDirectory(fullPath);
+
 			blob.DownloadToFile(fullPath);
 		}
 
 
 
-		private readonly ILogger _logger;
-		private readonly IFileAccessor _fileAccessor;
+		protected readonly ILogger _logger;
+		protected readonly IFileAccessor _fileAccessor;
+		protected SyncronizationStatistics _statistics;
 	}
 }

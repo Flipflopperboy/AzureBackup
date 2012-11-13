@@ -7,12 +7,13 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup.Providers
 {
-	public class AnalysisSyncronizationProvider : ISyncronizationProvider
+	public class UploadAnalysisSyncronizationProvider : ISyncronizationProvider
 	{
-		public AnalysisSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
+		public UploadAnalysisSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
 		{
 			this._logger = logger;
 			this._fileAccessor = fileAccessor;
+			this._statistics = new SyncronizationStatistics();
 		}
 
 
@@ -20,6 +21,18 @@ namespace Flip.AzureBackup.Providers
 		public void WriteStart()
 		{
 			this._logger.WriteLine("ANALYSIS");
+		}
+
+		public void WriteStatistics()
+		{
+			this._logger.WriteLine("");
+			this._logger.WriteFixedLine('-');
+			this._logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
+			this._logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
+			this._logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
+			this._logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
+			this._logger.WriteFixedLine('-');
+			this._logger.WriteLine("");
 		}
 
 		public bool InitializeDirectory(string path)
@@ -49,23 +62,28 @@ namespace Flip.AzureBackup.Providers
 
 		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedCount++;
 		}
 
 		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedModifiedDateCount++;
 		}
 
 		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
+			this._statistics.BlobNotExistCount++;
 		}
 
 		public void HandleFileNotExists(CloudBlob blob, string basePath)
 		{
+			this._statistics.FileNotExistCount++;
 		}
 
 
 
 		private readonly ILogger _logger;
 		private readonly IFileAccessor _fileAccessor;
+		private readonly SyncronizationStatistics _statistics;
 	}
 }

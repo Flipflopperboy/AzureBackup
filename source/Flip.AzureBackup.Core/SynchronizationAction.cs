@@ -4,6 +4,7 @@
 	{
 		Analysis,
 		Upload,
-		Download
+		DownloadKeep,
+		DownloadDelete
 	}
 }

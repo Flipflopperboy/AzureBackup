@@ -47,25 +47,24 @@ namespace Flip.AzureBackup
 				blobContainer.CreateIfNotExist();
 
 				provider.WriteStart();
+				this._logger.WriteLine("");
 
-				SynchronizeToCloud(settings.DirectoryPath, files, blobContainer, provider);
+				Synchronize(settings.DirectoryPath, files, blobContainer, provider);
 
 				this._logger.WriteLine("Done...");
 			}
 			else
 			{
 				this._logger.WriteLine("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
-			}			
+			}
 		}
 
-		private void SynchronizeToCloud(
+		private void Synchronize(
 			string directoryPath,
 			List<FileInformation> files,
 			CloudBlobContainer blobContainer,
 			ISyncronizationProvider provider)
 		{
-			var statistics = new SyncronizationStatistics();
-
 			Dictionary<Uri, CloudBlob> blobs = blobContainer.ListBlobs(blobRequestOptions)
 				.Cast<CloudBlob>()
 				.ToDictionary(blob => blob.Uri, blob => blob);
@@ -81,64 +80,42 @@ namespace Flip.AzureBackup
 						string contentMD5 = this._fileAccessor.GetMD5HashForFile(fileInfo.FullPath);
 						if (contentMD5 == blob.Properties.ContentMD5)
 						{
-							statistics.UpdatedModifiedDateCount++;
 							provider.HandleUpdateModifiedDate(blob, fileInfo);
 						}
 						else
 						{
-							statistics.UpdatedFileCount++;
 							provider.HandleUpdate(blob, fileInfo);
 						}
 					}
-
 					blobs.Remove(blobUri);
 				}
 				else
 				{
-					statistics.NewFileCount++;
 					provider.HandleBlobNotExists(blobContainer, fileInfo);
 				}
 			}
-
-			statistics.DeletedFileCount = blobs.Count;
 
 			foreach (var item in blobs)
 			{
 				provider.HandleFileNotExists(item.Value, directoryPath);
 			}
 
-			WriteStatistics(statistics);
+			provider.WriteStatistics();
 		}
 
 		private ISyncronizationProvider GetProvider(SynchronizationAction action)
 		{
 			switch (action)
 			{
-				case SynchronizationAction.Download:
-					return new DownloadSyncronizationProvider(this._logger, this._fileAccessor);
+				case SynchronizationAction.DownloadKeep:
+					return new DownloadKeepSyncronizationProvider(this._logger, this._fileAccessor);
+				case SynchronizationAction.DownloadDelete:
+					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileAccessor);
 				case SynchronizationAction.Upload:
 					return new UploadSyncronizationProvider(this._logger, this._fileAccessor);
 				default:
-					return new AnalysisSyncronizationProvider(this._logger, this._fileAccessor);
+					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileAccessor);
 			}
-		}
-
-		private void WriteStatistics(SyncronizationStatistics statistics)
-		{
-			int length = 30;
-			this._logger.WriteLine("");
-			this._logger.WriteLine("".PadLeft(length, '-'));
-			WriteFixedLine("New files:", statistics.NewFileCount, length);
-			WriteFixedLine("Modified files:", statistics.UpdatedFileCount, length);
-			WriteFixedLine("Changed date files:", statistics.UpdatedModifiedDateCount, length);
-			WriteFixedLine("Deleted files:", statistics.DeletedFileCount, length);
-			this._logger.WriteLine("".PadLeft(length, '-'));
-			this._logger.WriteLine("");
-		}
-
-		private void WriteFixedLine(string s, int n, int length)
-		{
-			this._logger.WriteLine(s + n.ToString().PadLeft(length - s.Length, ' '));
 		}
 
 
@@ -150,12 +127,5 @@ namespace Flip.AzureBackup
 			UseFlatBlobListing = true,
 			BlobListingDetails = BlobListingDetails.Metadata
 		};
-		private class SyncronizationStatistics
-		{
-			public int NewFileCount { get; set; }
-			public int UpdatedFileCount { get; set; }
-			public int DeletedFileCount { get; set; }
-			public int UpdatedModifiedDateCount { get; set; }
-		}
 	}
 }
