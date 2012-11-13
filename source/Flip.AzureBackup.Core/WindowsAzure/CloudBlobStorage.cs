@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.StorageClient.Protocol;
 
 
 
@@ -26,7 +29,7 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			if (blob.Properties.Length > FileSizeThresholdInBytes)
 			{
-				DownloadFileInChunks(blob.ToPageBlob, path);
+				DownloadFileInChunks(blob.ToBlockBlob, path);
 			}
 			else
 			{
@@ -38,7 +41,7 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			if (fileInfo.SizeInBytes > FileSizeThresholdInBytes)
 			{
-				UploadFileInChunks(blob.ToPageBlob, fileInfo);
+				UploadFileInChunks(blob.ToBlockBlob, fileInfo);
 			}
 			else
 			{
@@ -50,8 +53,9 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			if (fileInfo.SizeInBytes > FileSizeThresholdInBytes)
 			{
-				var pageBlob = blobContainer.GetPageBlobReference(fileInfo.RelativePath);
-				UploadFileInChunks(pageBlob, fileInfo);
+				var blockBlob = blobContainer.GetBlockBlobReference(fileInfo.RelativePath);
+				blockBlob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, false);
+				UploadFileInChunks(blockBlob, fileInfo);
 			}
 			else
 			{
@@ -62,98 +66,73 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		private void UploadFileInChunks(CloudPageBlob pageBlob, FileInformation fileInfo)
+		private void UploadFileInChunks(CloudBlockBlob blockBlob, FileInformation fileInfo)
 		{
-			pageBlob.Create(fileInfo.SizeInBytes.RoundUpToMultipleOf(pageBlobPageFactor)); //Block blob size must be multiple of 512
-
+			List<string> blockIds = new List<string>();
 
 			using (Stream stream = this._fileSystem.GetReadFileStream(fileInfo.FullPath))
 			{
 				using (BinaryReader reader = new BinaryReader(stream))
 				{
-					long totalUploaded = 0;
-					long fileOffset = 0;
-					int offsetToTransfer = -1;
+					int blockCounter = 0;
+					int bytesSent = 0;
+					int currentBlockSize = MaxBlockSize;
 
-					while (fileOffset < fileInfo.SizeInBytes)
+					while (bytesSent < fileInfo.SizeInBytes)
 					{
-						byte[] readBytes = reader.ReadBytes(chunkSizeInBytes);
-
-						int offsetInRange = 0;
-
-						// Make sure end is page size aligned
-						if ((readBytes.Length % pageBlobPageFactor) > 0)
+						if ((bytesSent + currentBlockSize) > fileInfo.SizeInBytes)
 						{
-							int grow = (int)(pageBlobPageFactor - (readBytes.Length % pageBlobPageFactor));
-							Array.Resize(ref readBytes, readBytes.Length + grow);
+							currentBlockSize = (int)fileInfo.SizeInBytes - bytesSent;
 						}
 
-						// Upload groups of continuous non-zero page blob pages.  
-						while (offsetInRange <= readBytes.Length)
+						string blockId = blockCounter.ToString().PadLeft(32, '0');
+						byte[] bytes = reader.ReadBytes(currentBlockSize);
+						using (var memoryStream = new MemoryStream(bytes))
 						{
-							if ((offsetInRange == readBytes.Length) || readBytes.IsAllZero(offsetInRange, pageBlobPageFactor))
-							{
-								if (offsetToTransfer != -1)
-								{
-									// Transfer up to this point
-									int sizeToTransfer = offsetInRange - offsetToTransfer;
-									using (MemoryStream memoryStream = new MemoryStream(readBytes, offsetToTransfer, sizeToTransfer, false, false))
-									{
-										pageBlob.WritePages(memoryStream, fileOffset + offsetToTransfer);
-									}
-									this._logger.WriteLine("Range ~" + (offsetToTransfer + fileOffset).ToByteString() + " + " + sizeToTransfer.ToByteString());
-									totalUploaded += sizeToTransfer;
-									offsetToTransfer = -1;
-								}
-							}
-							else
-							{
-								if (offsetToTransfer == -1)
-								{
-									offsetToTransfer = offsetInRange;
-								}
-							}
-							offsetInRange += pageBlobPageFactor;
+							blockIds.Add(blockId);
+							blockBlob.PutBlock(blockId, memoryStream, bytes.GetMD5Hash());
 						}
-						fileOffset += readBytes.Length;
+						bytesSent += currentBlockSize;
+						blockCounter++;
 					}
 				}
 			}
+			//Commit the block list
+			blockBlob.PutBlockList(blockIds);
 		}
 
-		private void DownloadFileInChunks(CloudPageBlob pageBlob, string path)
+		private void DownloadFileInChunks(CloudBlob blob, string path)
 		{
-			long blobSizeInBytes = pageBlob.Properties.Length;
-			long totalDownloaded = 0;
+			long blobLength = blob.Properties.Length;
+			int rangeStart = 0;
+			int currentBlockSize = MaxBlockSize;
 
-			// Create a new local file to write into
-			using (Stream stream = this._fileSystem.GetWriteFileStream(path))
+			using (Stream fileStream = this._fileSystem.GetWriteFileStream(path))
 			{
-				stream.SetLength(blobSizeInBytes);
-
-				// Download the valid ranges of the blob, and write them to the file
-				IEnumerable<PageRange> pageRanges = pageBlob.GetPageRanges();
-				BlobStream blobStream = pageBlob.OpenRead();
-
-				foreach (PageRange range in pageRanges)
+				while (rangeStart < blobLength)
 				{
-					// EndOffset is inclusive... so need to add 1
-					int rangeSize = (int)(range.EndOffset + 1 - range.StartOffset);
-
-					// Chop range into chucks, if needed
-					for (int subOffset = 0; subOffset < rangeSize; subOffset += chunkSizeInBytes)
+					if ((rangeStart + currentBlockSize) > blobLength)
 					{
-						int subRangeSize = Math.Min(rangeSize - subOffset, chunkSizeInBytes);
-						blobStream.Seek(range.StartOffset + subOffset, SeekOrigin.Begin);
-						stream.Seek(range.StartOffset + subOffset, SeekOrigin.Begin);
-
-						this._logger.WriteLine("Range: ~" + (range.StartOffset + subOffset).ToByteString() + " + " + subRangeSize.ToByteString());
-
-						byte[] buffer = new byte[subRangeSize];
-						blobStream.Read(buffer, 0, subRangeSize);
-						stream.Write(buffer, 0, subRangeSize);
-						totalDownloaded += subRangeSize;
+						currentBlockSize = (int)blobLength - rangeStart;
 					}
+
+					HttpWebRequest blobGetRequest = BlobRequest.Get(blob.Uri, 60, null, null);
+					blobGetRequest.Headers.Add("x-ms-range", string.Format(System.Globalization.CultureInfo.InvariantCulture, "bytes={0}-{1}", rangeStart, rangeStart + currentBlockSize - 1));
+
+					// Sign request.
+					StorageCredentials credentials = blob.ServiceClient.Credentials;
+					credentials.SignRequest(blobGetRequest);
+
+					// Read chunk.
+					using (HttpWebResponse response = blobGetRequest.GetResponse() as HttpWebResponse)
+					{
+						using (Stream stream = response.GetResponseStream())
+						{
+							stream.CopyTo(fileStream);
+						}
+					}
+
+					rangeStart += currentBlockSize;
 				}
 			}
 		}
@@ -162,8 +141,8 @@ namespace Flip.AzureBackup.WindowsAzure
 
 		private readonly ILogger _logger;
 		private readonly IFileSystem _fileSystem;
-		private static readonly int chunkSizeInBytes = 4.MBToBytes();
+		private static readonly int MaxBlockSize = 4.MBToBytes();
 		private static readonly long FileSizeThresholdInBytes = (12L).MBToBytes();
-		private const int pageBlobPageFactor = 512;
+		private const int PageBlobPageFactor = 512;
 	}
 }
