@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flip.Common", "Flip.Common"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flip.Common.Core", "..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj", "{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4EC489EE-6C7F-498D-BE2B-9B37A0DE4091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flip.AzureBackup.Core.Tests", "Flip.AzureBackup.Core.Tests\Flip.AzureBackup.Core.Tests.csproj", "{2A2B9152-665A-4F33-83C9-A144DB5EF8C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,11 +38,16 @@ Global
 		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A2B9152-665A-4F33-83C9-A144DB5EF8C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A2B9152-665A-4F33-83C9-A144DB5EF8C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A2B9152-665A-4F33-83C9-A144DB5EF8C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A2B9152-665A-4F33-83C9-A144DB5EF8C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{52AB4DA0-6DDC-41D2-887D-C1A7CAEB8CDD} = {30D2A228-9D36-49CC-804A-75719D1E76D5}
+		{2A2B9152-665A-4F33-83C9-A144DB5EF8C4} = {4EC489EE-6C7F-498D-BE2B-9B37A0DE4091}
 	EndGlobalSection
 EndGlobal

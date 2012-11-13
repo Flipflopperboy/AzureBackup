@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -10,10 +11,11 @@ namespace Flip.AzureBackup.Providers
 {
 	public class DownloadKeepSyncronizationProvider : ISyncronizationProvider
 	{
-		public DownloadKeepSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
+		public DownloadKeepSyncronizationProvider(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
 			this._fileAccessor = fileAccessor;
+			this._storage = storage;
 			this._statistics = new SyncronizationStatistics();
 		}
 
@@ -84,13 +86,14 @@ namespace Flip.AzureBackup.Providers
 			this._logger.WriteLine("Downloading new file " + fullPath + "...");
 			this._fileAccessor.EnsureFileDirectory(fullPath);
 
-			blob.DownloadToFile(fullPath);
+			this._storage.DownloadFile(blob, fullPath);
 		}
 
 
 
 		protected readonly ILogger _logger;
-		protected readonly IFileAccessor _fileAccessor;
+		protected readonly IFileSystem _fileAccessor;
+		protected readonly ICloudBlobStorage _storage;
 		protected SyncronizationStatistics _statistics;
 	}
 }

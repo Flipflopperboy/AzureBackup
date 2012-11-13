@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -9,10 +10,11 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class UploadSyncronizationProvider : ISyncronizationProvider
 	{
-		public UploadSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
+		public UploadSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._fileAccessor = fileAccessor;
+			this._storage = storage;
+			this._fileSystem = fileSystem;
 			this._statistics = new SyncronizationStatistics();
 		}
 
@@ -37,7 +39,7 @@ namespace Flip.AzureBackup.Providers
 
 		public bool InitializeDirectory(string path)
 		{
-			if (!this._fileAccessor.DirectoryExists(path))
+			if (!this._fileSystem.DirectoryExists(path))
 			{
 				this._logger.WriteLine("Directory does not exist '" + path + "'.");
 				return false;
@@ -63,9 +65,8 @@ namespace Flip.AzureBackup.Providers
 		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedCount++;
-
 			this._logger.WriteLine("Updating blob " + blob.Uri.ToString() + "...");
-			blob.UploadFile(fileInfo);
+			this._storage.UploadFile(blob, fileInfo);
 		}
 
 		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
@@ -78,17 +79,14 @@ namespace Flip.AzureBackup.Providers
 
 		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
-			this._statistics.BlobNotExistCount++;
-
-			CloudBlob blob = blobContainer.GetBlobReference(fileInfo.RelativePath);
 			this._logger.WriteLine("Uploading file " + fileInfo.FullPath + "...");
-			blob.UploadFile(fileInfo);
+			this._storage.UploadFile(blobContainer, fileInfo);
+			this._statistics.BlobNotExistCount++;
 		}
 
 		public void HandleFileNotExists(CloudBlob blob, string basePath)
 		{
 			this._statistics.FileNotExistCount++;
-
 			this._logger.WriteLine("Deleting blob " + blob.Uri.ToString() + "...");
 			blob.DeleteIfExists();
 		}
@@ -96,7 +94,8 @@ namespace Flip.AzureBackup.Providers
 
 
 		private readonly ILogger _logger;
-		private readonly IFileAccessor _fileAccessor;
+		private readonly IFileSystem _fileSystem;
 		private readonly SyncronizationStatistics _statistics;
+		private readonly ICloudBlobStorage _storage;		
 	}
 }

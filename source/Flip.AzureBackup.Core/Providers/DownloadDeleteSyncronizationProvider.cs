@@ -1,5 +1,6 @@
 ﻿using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -8,8 +9,8 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class DownloadDeleteSyncronizationProvider : DownloadKeepSyncronizationProvider
 	{
-		public DownloadDeleteSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
-			: base(logger, fileAccessor)
+		public DownloadDeleteSyncronizationProvider(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
+			: base(logger, fileAccessor, storage)
 		{
 		}
 

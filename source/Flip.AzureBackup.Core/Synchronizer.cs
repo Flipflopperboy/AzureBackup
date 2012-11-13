@@ -4,6 +4,7 @@ using System.Linq;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.Providers;
+using Flip.AzureBackup.WindowsAzure;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
@@ -13,10 +14,11 @@ namespace Flip.AzureBackup
 {
 	public class Synchronizer : ISynchronizer
 	{
-		public Synchronizer(ILogger logger, IFileAccessor fileAccessor)
+		public Synchronizer(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._fileAccessor = fileAccessor;
+			this._fileSystem = fileAccessor;
+			this._storage = storage;
 		}
 
 
@@ -30,8 +32,8 @@ namespace Flip.AzureBackup
 				return;
 			}
 
-			List<FileInformation> files = this._fileAccessor
-				.GetFileInfoIncludingSubDirectories(settings.DirectoryPath).ToList();
+			List<FileInformation> files = this._fileSystem
+				.GetFileInformationIncludingSubDirectories(settings.DirectoryPath).ToList();
 
 			if (!provider.NeedToCheckCloud(files))
 			{
@@ -77,7 +79,7 @@ namespace Flip.AzureBackup
 					CloudBlob blob = blobs[blobUri];
 					if (provider.HasBeenModified(blob, fileInfo))
 					{
-						string contentMD5 = this._fileAccessor.GetMD5HashForFile(fileInfo.FullPath);
+						string contentMD5 = this._fileSystem.GetMD5HashForFile(fileInfo.FullPath);
 						if (contentMD5 == blob.Properties.ContentMD5)
 						{
 							provider.HandleUpdateModifiedDate(blob, fileInfo);
@@ -105,23 +107,25 @@ namespace Flip.AzureBackup
 
 		private ISyncronizationProvider GetProvider(SynchronizationAction action)
 		{
+			//TODO - Place in container?
 			switch (action)
 			{
 				case SynchronizationAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(this._logger, this._fileAccessor);
+					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				case SynchronizationAction.DownloadDelete:
-					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileAccessor);
+					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				case SynchronizationAction.Upload:
-					return new UploadSyncronizationProvider(this._logger, this._fileAccessor);
+					return new UploadSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				default:
-					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileAccessor);
+					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileSystem);
 			}
 		}
 
 
 
 		private readonly ILogger _logger;
-		private readonly IFileAccessor _fileAccessor;
+		private readonly IFileSystem _fileSystem;
+		private readonly ICloudBlobStorage _storage;
 		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
 		{
 			UseFlatBlobListing = true,

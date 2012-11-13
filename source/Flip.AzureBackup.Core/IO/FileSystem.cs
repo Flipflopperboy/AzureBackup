@@ -8,15 +8,25 @@ using System.Security.Cryptography;
 
 namespace Flip.AzureBackup.IO
 {
-	public sealed class FileAccessor : IFileAccessor
+	public sealed class FileSystem : IFileSystem
 	{
-		public IEnumerable<FileInformation> GetFileInfoIncludingSubDirectories(string directoryPath)
+		public IEnumerable<FileInformation> GetFileInformationIncludingSubDirectories(string directoryPath)
 		{
 			DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
 			return directoryInfo
 				.GetFiles("*", SearchOption.AllDirectories)
-				.Select(file => new FileInformation(GetFullPath(file), GetRelativePath(file, directoryPath), file.LastWriteTimeUtc));
+				.Select(file => new FileInformation(GetFullPath(file), GetRelativePath(file, directoryPath), file.LastWriteTimeUtc, file.Length));
+		}
+
+		public Stream GetReadFileStream(string path)
+		{
+			return new FileStream(path, FileMode.Open, FileAccess.Read);
+		}
+		
+		public Stream GetWriteFileStream(string path)
+		{
+			return new FileStream(path, FileMode.Create, FileAccess.Write);
 		}
 
 		public bool DirectoryExists(string directoryPath)

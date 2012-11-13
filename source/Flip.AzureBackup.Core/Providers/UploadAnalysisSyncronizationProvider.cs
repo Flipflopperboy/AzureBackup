@@ -9,10 +9,10 @@ namespace Flip.AzureBackup.Providers
 {
 	public class UploadAnalysisSyncronizationProvider : ISyncronizationProvider
 	{
-		public UploadAnalysisSyncronizationProvider(ILogger logger, IFileAccessor fileAccessor)
+		public UploadAnalysisSyncronizationProvider(ILogger logger, IFileSystem fileAccessor)
 		{
 			this._logger = logger;
-			this._fileAccessor = fileAccessor;
+			this._fileSystem = fileAccessor;
 			this._statistics = new SyncronizationStatistics();
 		}
 
@@ -37,7 +37,7 @@ namespace Flip.AzureBackup.Providers
 
 		public bool InitializeDirectory(string path)
 		{
-			if (!this._fileAccessor.DirectoryExists(path))
+			if (!this._fileSystem.DirectoryExists(path))
 			{
 				this._logger.WriteLine("Directory does not exist '" + path + "'.");
 				return false;
@@ -83,7 +83,7 @@ namespace Flip.AzureBackup.Providers
 
 
 		private readonly ILogger _logger;
-		private readonly IFileAccessor _fileAccessor;
+		private readonly IFileSystem _fileSystem;
 		private readonly SyncronizationStatistics _statistics;
 	}
 }
