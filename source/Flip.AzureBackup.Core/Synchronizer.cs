@@ -110,10 +110,11 @@ namespace Flip.AzureBackup
 			//TODO - Place in container?
 			switch (action)
 			{
-				case SynchronizationAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
+				case SynchronizationAction.Download:
 				case SynchronizationAction.DownloadDelete:
 					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileSystem, this._storage);
+				case SynchronizationAction.DownloadKeep:
+					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				case SynchronizationAction.Upload:
 					return new UploadSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				default:

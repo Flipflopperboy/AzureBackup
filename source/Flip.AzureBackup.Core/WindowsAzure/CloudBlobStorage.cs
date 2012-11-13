@@ -77,23 +77,35 @@ namespace Flip.AzureBackup.WindowsAzure
 					int blockCounter = 0;
 					int bytesSent = 0;
 					int currentBlockSize = MaxBlockSize;
+					int exceptionCount = 0;
 
-					while (bytesSent < fileInfo.SizeInBytes)
+					try
 					{
-						if ((bytesSent + currentBlockSize) > fileInfo.SizeInBytes)
+						while (bytesSent < fileInfo.SizeInBytes)
 						{
-							currentBlockSize = (int)fileInfo.SizeInBytes - bytesSent;
-						}
+							if ((bytesSent + currentBlockSize) > fileInfo.SizeInBytes)
+							{
+								currentBlockSize = (int)fileInfo.SizeInBytes - bytesSent;
+							}
 
-						string blockId = blockCounter.ToString().PadLeft(32, '0');
-						byte[] bytes = reader.ReadBytes(currentBlockSize);
-						using (var memoryStream = new MemoryStream(bytes))
-						{
-							blockIds.Add(blockId);
-							blockBlob.PutBlock(blockId, memoryStream, bytes.GetMD5Hash());
+							string blockId = blockCounter.ToString().PadLeft(32, '0');
+							byte[] bytes = reader.ReadBytes(currentBlockSize);
+							using (var memoryStream = new MemoryStream(bytes))
+							{
+								blockIds.Add(blockId);
+								blockBlob.PutBlock(blockId, memoryStream, bytes.GetMD5Hash());
+							}
+							bytesSent += currentBlockSize;
+							blockCounter++;
 						}
-						bytesSent += currentBlockSize;
-						blockCounter++;
+					}
+					catch (Exception ex)
+					{
+						exceptionCount++;
+						if (exceptionCount >= 100)
+						{
+							throw new Exception("Could not upload file", ex);
+						}
 					}
 				}
 			}
@@ -106,33 +118,45 @@ namespace Flip.AzureBackup.WindowsAzure
 			long blobLength = blob.Properties.Length;
 			int rangeStart = 0;
 			int currentBlockSize = MaxBlockSize;
+			int exceptionCount = 0;
 
 			using (Stream fileStream = this._fileSystem.GetWriteFileStream(path))
 			{
-				while (rangeStart < blobLength)
+				try
 				{
-					if ((rangeStart + currentBlockSize) > blobLength)
+					while (rangeStart < blobLength)
 					{
-						currentBlockSize = (int)blobLength - rangeStart;
-					}
-
-					HttpWebRequest blobGetRequest = BlobRequest.Get(blob.Uri, 60, null, null);
-					blobGetRequest.Headers.Add("x-ms-range", string.Format(System.Globalization.CultureInfo.InvariantCulture, "bytes={0}-{1}", rangeStart, rangeStart + currentBlockSize - 1));
-
-					// Sign request.
-					StorageCredentials credentials = blob.ServiceClient.Credentials;
-					credentials.SignRequest(blobGetRequest);
-
-					// Read chunk.
-					using (HttpWebResponse response = blobGetRequest.GetResponse() as HttpWebResponse)
-					{
-						using (Stream stream = response.GetResponseStream())
+						if ((rangeStart + currentBlockSize) > blobLength)
 						{
-							stream.CopyTo(fileStream);
+							currentBlockSize = (int)blobLength - rangeStart;
 						}
-					}
 
-					rangeStart += currentBlockSize;
+						HttpWebRequest blobGetRequest = BlobRequest.Get(blob.Uri, 60, null, null);
+						blobGetRequest.Headers.Add("x-ms-range", string.Format(System.Globalization.CultureInfo.InvariantCulture, "bytes={0}-{1}", rangeStart, rangeStart + currentBlockSize - 1));
+
+						// Sign request.
+						StorageCredentials credentials = blob.ServiceClient.Credentials;
+						credentials.SignRequest(blobGetRequest);
+
+						// Read chunk.
+						using (HttpWebResponse response = blobGetRequest.GetResponse() as HttpWebResponse)
+						{
+							using (Stream stream = response.GetResponseStream())
+							{
+								stream.CopyTo(fileStream);
+							}
+						}
+
+						rangeStart += currentBlockSize;
+					}
+				}
+				catch (Exception ex)
+				{
+					exceptionCount++;
+					if (exceptionCount >= 100)
+					{
+						throw new Exception("Could not download file", ex);
+					}
 				}
 			}
 		}
@@ -142,7 +166,6 @@ namespace Flip.AzureBackup.WindowsAzure
 		private readonly ILogger _logger;
 		private readonly IFileSystem _fileSystem;
 		private static readonly int MaxBlockSize = 4.MBToBytes();
-		private static readonly long FileSizeThresholdInBytes = (12L).MBToBytes();
-		private const int PageBlobPageFactor = 512;
+		private static readonly long FileSizeThresholdInBytes = (4L).MBToBytes();
 	}
 }
