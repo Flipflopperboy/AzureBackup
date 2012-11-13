@@ -66,6 +66,7 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			pageBlob.Create(fileInfo.SizeInBytes.RoundUpToMultipleOf(pageBlobPageFactor)); //Block blob size must be multiple of 512
 
+
 			using (Stream stream = this._fileSystem.GetReadFileStream(fileInfo.FullPath))
 			{
 				using (BinaryReader reader = new BinaryReader(stream))
@@ -76,27 +77,27 @@ namespace Flip.AzureBackup.WindowsAzure
 
 					while (fileOffset < fileInfo.SizeInBytes)
 					{
-						byte[] range = reader.ReadBytes(chunkSizeInBytes);
+						byte[] readBytes = reader.ReadBytes(chunkSizeInBytes);
 
 						int offsetInRange = 0;
 
 						// Make sure end is page size aligned
-						if ((range.Length % pageBlobPageFactor) > 0)
+						if ((readBytes.Length % pageBlobPageFactor) > 0)
 						{
-							int grow = (int)(pageBlobPageFactor - (range.Length % pageBlobPageFactor));
-							Array.Resize(ref range, range.Length + grow);
+							int grow = (int)(pageBlobPageFactor - (readBytes.Length % pageBlobPageFactor));
+							Array.Resize(ref readBytes, readBytes.Length + grow);
 						}
 
-						// Upload groups of contiguous non-zero page blob pages.  
-						while (offsetInRange <= range.Length)
+						// Upload groups of continuous non-zero page blob pages.  
+						while (offsetInRange <= readBytes.Length)
 						{
-							if ((offsetInRange == range.Length) || range.IsAllZero(offsetInRange, pageBlobPageFactor))
+							if ((offsetInRange == readBytes.Length) || readBytes.IsAllZero(offsetInRange, pageBlobPageFactor))
 							{
 								if (offsetToTransfer != -1)
 								{
 									// Transfer up to this point
 									int sizeToTransfer = offsetInRange - offsetToTransfer;
-									using (MemoryStream memoryStream = new MemoryStream(range, offsetToTransfer, sizeToTransfer, false, false))
+									using (MemoryStream memoryStream = new MemoryStream(readBytes, offsetToTransfer, sizeToTransfer, false, false))
 									{
 										pageBlob.WritePages(memoryStream, fileOffset + offsetToTransfer);
 									}
@@ -114,7 +115,7 @@ namespace Flip.AzureBackup.WindowsAzure
 							}
 							offsetInRange += pageBlobPageFactor;
 						}
-						fileOffset += range.Length;
+						fileOffset += readBytes.Length;
 					}
 				}
 			}
@@ -161,8 +162,8 @@ namespace Flip.AzureBackup.WindowsAzure
 
 		private readonly ILogger _logger;
 		private readonly IFileSystem _fileSystem;
-		private static readonly int chunkSizeInBytes = 5.MBToBytes();
-		private static readonly long FileSizeThresholdInBytes = (10L).MBToBytes();
+		private static readonly int chunkSizeInBytes = 4.MBToBytes();
+		private static readonly long FileSizeThresholdInBytes = (12L).MBToBytes();
 		private const int pageBlobPageFactor = 512;
 	}
 }

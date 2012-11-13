@@ -38,7 +38,7 @@ namespace Flip.AzureBackup.Providers
 			this._statistics.BlobNotExistCount++;
 
 			this._logger.WriteLine("Deleting file " + fileInfo.FullPath + "...");
-			this._fileAccessor.DeleteFile(fileInfo.FullPath);
+			this._fileSystem.DeleteFile(fileInfo.FullPath);
 		}
 	}
 }

@@ -14,7 +14,7 @@ namespace Flip.AzureBackup.Providers
 		public DownloadKeepSyncronizationProvider(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._fileAccessor = fileAccessor;
+			this._fileSystem = fileAccessor;
 			this._storage = storage;
 			this._statistics = new SyncronizationStatistics();
 		}
@@ -39,7 +39,7 @@ namespace Flip.AzureBackup.Providers
 
 		public bool InitializeDirectory(string path)
 		{
-			this._fileAccessor.CreateDirectoryIfNotExists(path);
+			this._fileSystem.CreateDirectoryIfNotExists(path);
 			return true;
 		}
 
@@ -66,7 +66,7 @@ namespace Flip.AzureBackup.Providers
 			this._statistics.UpdatedModifiedDateCount++;
 
 			this._logger.WriteLine("Updating modification date for file " + fileInfo.FullPath + "...");
-			this._fileAccessor.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
+			this._fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
 		}
 
 		public virtual void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
@@ -78,13 +78,11 @@ namespace Flip.AzureBackup.Providers
 		{
 			this._statistics.FileNotExistCount++;
 
-			Uri relativeUri = blob.GetRelativeFileUri();
-			Uri baseUri = new Uri(basePath);
-			Uri fullUri = new Uri(baseUri, relativeUri);
-			string fullPath = fullUri.LocalPath;
+			string relativePath = blob.GetRelativeFilePath();
+			string fullPath = this._fileSystem.Combine(basePath, relativePath);
 
 			this._logger.WriteLine("Downloading new file " + fullPath + "...");
-			this._fileAccessor.EnsureFileDirectory(fullPath);
+			this._fileSystem.EnsureFileDirectory(fullPath);
 
 			this._storage.DownloadFile(blob, fullPath);
 		}
@@ -92,7 +90,7 @@ namespace Flip.AzureBackup.Providers
 
 
 		protected readonly ILogger _logger;
-		protected readonly IFileSystem _fileAccessor;
+		protected readonly IFileSystem _fileSystem;
 		protected readonly ICloudBlobStorage _storage;
 		protected SyncronizationStatistics _statistics;
 	}
