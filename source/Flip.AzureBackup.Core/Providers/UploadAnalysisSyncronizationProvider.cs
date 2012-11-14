@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Microsoft.WindowsAzure.StorageClient;
@@ -18,22 +19,22 @@ namespace Flip.AzureBackup.Providers
 
 
 
-		public void WriteStart()
+		public string Description
 		{
-			this._logger.WriteLine("ANALYSIS");
+			get { return "Analysis"; }
 		}
 
-		public void WriteStatistics()
-		{
-			this._logger.WriteLine("");
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
-			this._logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
-			this._logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
-			this._logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteLine("");
-		}
+		//public void WriteStatistics()
+		//{
+		//	this._logger.WriteLine("");
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
+		//	this._logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
+		//	this._logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
+		//	this._logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteLine("");
+		//}
 
 		public bool InitializeDirectory(string path)
 		{
@@ -45,39 +46,24 @@ namespace Flip.AzureBackup.Providers
 			return true;
 		}
 
-		public bool NeedToCheckCloud(List<FileInformation> files)
+		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			if (files.Count == 0)
-			{
-				this._logger.WriteLine("No files to process...");
-				return false;
-			}
-			return true;
+			return new EmptySyncAction();
 		}
 
-		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			return fileInfo.LastWriteTimeUtc > blob.GetFileLastModifiedUtc();
+			return new EmptySyncAction();
 		}
 
-		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
-			this._statistics.UpdatedCount++;
+			return new EmptySyncAction();
 		}
 
-		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
 		{
-			this._statistics.UpdatedModifiedDateCount++;
-		}
-
-		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
-		{
-			this._statistics.BlobNotExistCount++;
-		}
-
-		public void HandleFileNotExists(CloudBlob blob, string basePath)
-		{
-			this._statistics.FileNotExistCount++;
+			return new EmptySyncAction();
 		}
 
 

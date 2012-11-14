@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
@@ -13,29 +14,29 @@ namespace Flip.AzureBackup.Providers
 		public UploadSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._storage = storage;
+			this._blobStorage = storage;
 			this._fileSystem = fileSystem;
 			this._statistics = new SyncronizationStatistics();
 		}
 
 
 
-		public void WriteStart()
+		public string Description
 		{
-			this._logger.WriteLine("UPLOAD");
+			get { return "Upload"; }
 		}
 
-		public void WriteStatistics()
-		{
-			this._logger.WriteLine("");
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
-			this._logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
-			this._logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
-			this._logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteLine("");
-		}
+		//public void WriteStatistics()
+		//{
+		//	this._logger.WriteLine("");
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
+		//	this._logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
+		//	this._logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
+		//	this._logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteLine("");
+		//}
 
 		public bool InitializeDirectory(string path)
 		{
@@ -47,48 +48,24 @@ namespace Flip.AzureBackup.Providers
 			return true;
 		}
 
-		public bool NeedToCheckCloud(List<FileInformation> files)
+		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			if (files.Count == 0)
-			{
-				this._logger.WriteLine("No files to process...");
-				return false;
-			}
-			return true;
+			return new UpdateBlobSyncAction(_blobStorage, fileInfo, blob);
 		}
 
-		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			return fileInfo.LastWriteTimeUtc > blob.GetFileLastModifiedUtc();
+			return new UpdateBlobModifiedDateSyncAction(fileInfo, blob);
 		}
 
-		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
-			this._statistics.UpdatedCount++;
-			this._logger.WriteLine("Updating blob " + blob.Uri.ToString() + "...");
-			this._storage.UploadFile(blob, fileInfo);
+			return new CreateBlobSyncAction(_blobStorage, blobContainer, fileInfo);
 		}
 
-		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
 		{
-			this._statistics.UpdatedModifiedDateCount++;
-
-			this._logger.WriteLine("Updating modification date for blob " + blob.Uri.ToString() + "...");
-			blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true);
-		}
-
-		public void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
-		{
-			this._logger.WriteLine("Uploading file " + fileInfo.FullPath + "...");
-			this._storage.UploadFile(blobContainer, fileInfo);
-			this._statistics.BlobNotExistCount++;
-		}
-
-		public void HandleFileNotExists(CloudBlob blob, string basePath)
-		{
-			this._statistics.FileNotExistCount++;
-			this._logger.WriteLine("Deleting blob " + blob.Uri.ToString() + "...");
-			blob.DeleteIfExists();
+			return new DeleteBlobSyncAction(blob);
 		}
 
 
@@ -96,6 +73,6 @@ namespace Flip.AzureBackup.Providers
 		private readonly ILogger _logger;
 		private readonly IFileSystem _fileSystem;
 		private readonly SyncronizationStatistics _statistics;
-		private readonly ICloudBlobStorage _storage;		
+		private readonly ICloudBlobStorage _blobStorage;		
 	}
 }

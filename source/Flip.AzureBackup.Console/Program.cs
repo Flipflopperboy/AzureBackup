@@ -12,11 +12,11 @@ namespace Flip.AzureBackup.Console
 	{
 		static void Main(string[] args)
 		{
-			AzureSyncSettings settings;
+			SyncSettings settings;
 			if (ParseSettings(args, out settings))
 			{
 				IContainer container = ContainerConfiguration.CreateContainer();
-				var synchronizer = container.Resolve<ISynchronizer>();
+				var synchronizer = container.Resolve<ISyncEngine>();
 				synchronizer.Sync(settings);
 			}
 			System.Console.ReadKey();
@@ -24,10 +24,10 @@ namespace Flip.AzureBackup.Console
 
 
 
-		private static bool ParseSettings(string[] args, out AzureSyncSettings settings)
+		private static bool ParseSettings(string[] args, out SyncSettings settings)
 		{
 			settings = null;
-			var parsedSettings = new AzureSyncSettings();
+			var parsedSettings = new SyncSettings();
 			bool actionOk = false;
 			string actionValue = null;
 
@@ -39,8 +39,8 @@ namespace Flip.AzureBackup.Console
 					.Add("a|action=", "Action to perform", v =>
 						{
 							actionValue = v;
-							AzureSyncAction action;
-							if (Enum.TryParse<AzureSyncAction>(v, true, out action))
+							SyncAction action;
+							if (Enum.TryParse<SyncAction>(v, true, out action))
 							{
 								parsedSettings.Action = action;
 								actionOk = true;
@@ -82,7 +82,7 @@ namespace Flip.AzureBackup.Console
 			if (!actionOk)
 			{
 				System.Console.WriteLine("Invalid action '" + actionValue + "'.");
-				System.Console.WriteLine("Valid values are [" + Enum.GetNames(typeof(AzureSyncAction)).ToSeparatedString(n => n, "|") + "].");
+				System.Console.WriteLine("Valid values are [" + Enum.GetNames(typeof(SyncAction)).ToSeparatedString(n => n, "|") + "].");
 				hasError = true;
 			}
 

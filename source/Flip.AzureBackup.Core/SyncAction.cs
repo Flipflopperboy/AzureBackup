@@ -1,11 +1,10 @@
 ﻿namespace Flip.AzureBackup
 {
-	public enum AzureSyncAction
+	public enum SyncAction
 	{
 		Analysis,
 		Upload,
 		Download,
-		DownloadKeep,
-		DownloadDelete
+		DownloadKeep
 	}
 }

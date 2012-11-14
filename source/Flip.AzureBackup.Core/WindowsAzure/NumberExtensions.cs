@@ -1,6 +1,6 @@
-﻿namespace Flip.AzureBackup
+﻿namespace Flip.AzureBackup.WindowsAzure
 {
-	public static class NumberExtensions
+	internal static class NumberExtensions
 	{
 		public static int MBToBytes(this int value)
 		{

@@ -1,10 +1,10 @@
 ﻿namespace Flip.AzureBackup
 {
-	public class AzureSyncSettings
+	public class SyncSettings
 	{
 		public string ContainerName { get; set; }
 		public string DirectoryPath { get; set; }
 		public string CloudConnectionString { get; set; }
-		public AzureSyncAction Action { get; set; }
+		public SyncAction Action { get; set; }
 	}
 }

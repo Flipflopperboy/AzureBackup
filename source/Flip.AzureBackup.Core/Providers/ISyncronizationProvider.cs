@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Microsoft.WindowsAzure.StorageClient;
 
@@ -8,14 +8,11 @@ namespace Flip.AzureBackup.Providers
 {
 	public interface ISyncronizationProvider
 	{
-		void WriteStart();
-		void WriteStatistics();
-		bool NeedToCheckCloud(List<FileInformation> files);
-		bool HasBeenModified(CloudBlob blob, FileInformation fileInfo);
-		void HandleUpdate(CloudBlob blob, FileInformation fileInfo);
-		void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo);
-		void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo);
-		void HandleFileNotExists(CloudBlob blob, string basePath);
+		string Description { get; }
+		ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo);
+		ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo);
+		ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo);
+		ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath);
 		bool InitializeDirectory(string path);		
 	}
 }

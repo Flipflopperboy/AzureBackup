@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
@@ -15,27 +14,27 @@ namespace Flip.AzureBackup.Providers
 		{
 			this._logger = logger;
 			this._fileSystem = fileSystem;
-			this._storage = storage;
+			this._blobStorage = storage;
 			this._statistics = new SyncronizationStatistics();
 		}
 
 
 
-		public virtual void WriteStart()
+		public virtual string Description
 		{
-			this._logger.WriteLine("DOWNLOAD BUT KEEP REMOVED FILES");
+			get { return "Download - Keep Deleted Files"; }
 		}
 
-		public virtual void WriteStatistics()
-		{
-			this._logger.WriteLine("");
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
-			this._logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
-			this._logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
-			this._logger.WriteFixedLine('-');
-			this._logger.WriteLine("");
-		}
+		//public virtual void WriteStatistics()
+		//{
+		//	this._logger.WriteLine("");
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+		//	this._logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+		//	this._logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+		//	this._logger.WriteFixedLine('-');
+		//	this._logger.WriteLine("");
+		//}
 
 		public bool InitializeDirectory(string path)
 		{
@@ -43,56 +42,31 @@ namespace Flip.AzureBackup.Providers
 			return true;
 		}
 
-		public bool NeedToCheckCloud(List<FileInformation> files)
+		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			return true;
+			return new UpdateFileSyncAction(_fileSystem, fileInfo, blob);
 		}
 
-		public bool HasBeenModified(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
-			return fileInfo.LastWriteTimeUtc < blob.GetFileLastModifiedUtc();
+			return new UpdateFileModifiedDateSyncAction(_fileSystem, fileInfo, blob);
 		}
 
-		public void HandleUpdate(CloudBlob blob, FileInformation fileInfo)
+		public virtual ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
-			this._statistics.UpdatedCount++;
-
-			this._logger.WriteLine("Downloading updated file " + blob.Uri.ToString() + "...");
-			blob.DownloadToFile(fileInfo.FullPath);
-			this._fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
+			return new EmptySyncAction();
 		}
 
-		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
+		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
 		{
-			this._statistics.UpdatedModifiedDateCount++;
-
-			this._logger.WriteLine("Updating modification date for file " + fileInfo.FullPath + "...");
-			this._fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
-		}
-
-		public virtual void HandleBlobNotExists(CloudBlobContainer blobContainer, FileInformation fileInfo)
-		{
-			this._logger.WriteLine("File no longer in cloud " + fileInfo.FullPath + "...");
-		}
-
-		public void HandleFileNotExists(CloudBlob blob, string basePath)
-		{
-			this._statistics.FileNotExistCount++;
-
-			string relativePath = blob.GetRelativeFilePath();
-			string fullPath = this._fileSystem.Combine(basePath, relativePath);
-
-			this._logger.WriteLine("Downloading new file " + fullPath + "...");
-			this._fileSystem.EnsureFileDirectory(fullPath);
-
-			this._storage.DownloadFile(blob, fullPath);
+			return new CreateFileSyncAction(_fileSystem, _blobStorage, basePath, blob);
 		}
 
 
 
 		protected readonly ILogger _logger;
 		protected readonly IFileSystem _fileSystem;
-		protected readonly ICloudBlobStorage _storage;
+		protected readonly ICloudBlobStorage _blobStorage;
 		protected SyncronizationStatistics _statistics;
 	}
 }

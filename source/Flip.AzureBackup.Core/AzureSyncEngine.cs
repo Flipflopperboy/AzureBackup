@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.Providers;
@@ -12,7 +13,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup
 {
-	public class AzureSyncEngine : ISynchronizer
+	public class AzureSyncEngine : ISyncEngine
 	{
 		public AzureSyncEngine(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
@@ -23,19 +24,11 @@ namespace Flip.AzureBackup
 
 
 
-		public void Sync(AzureSyncSettings settings)
+		public void Sync(SyncSettings settings)
 		{
 			ISyncronizationProvider provider = GetProvider(settings.Action);
 
 			if (!provider.InitializeDirectory(settings.DirectoryPath))
-			{
-				return;
-			}
-
-			List<FileInformation> files = this._fileSystem
-				.GetFileInformationIncludingSubDirectories(settings.DirectoryPath).ToList();
-
-			if (!provider.NeedToCheckCloud(files))
 			{
 				return;
 			}
@@ -48,10 +41,15 @@ namespace Flip.AzureBackup
 
 				blobContainer.CreateIfNotExist();
 
-				provider.WriteStart();
+				this._logger.WriteLine(provider.Description);
 				this._logger.WriteLine("");
 
-				Sync(settings.DirectoryPath, files, blobContainer, provider);
+				Queue<ISyncAction> actions = GetActions(settings.DirectoryPath, blobContainer, provider);
+
+				while (actions.Count > 0)
+				{
+					actions.Dequeue().Invoke();
+				}
 
 				this._logger.WriteLine("Done...");
 			}
@@ -61,15 +59,23 @@ namespace Flip.AzureBackup
 			}
 		}
 
-		private void Sync(
+
+
+		private Queue<ISyncAction> GetActions(
 			string directoryPath,
-			List<FileInformation> files,
 			CloudBlobContainer blobContainer,
 			ISyncronizationProvider provider)
 		{
+			Queue<string> queue = new Queue<string>();
+
+			List<FileInformation> files = this._fileSystem
+				.GetFileInformationIncludingSubDirectories(directoryPath).ToList();
+
 			Dictionary<Uri, CloudBlob> blobs = blobContainer.ListBlobs(blobRequestOptions)
 				.Cast<CloudBlob>()
 				.ToDictionary(blob => blob.Uri, blob => blob);
+
+			Queue<ISyncAction> actions = new Queue<ISyncAction>();
 
 			foreach (var fileInfo in files)
 			{
@@ -77,52 +83,51 @@ namespace Flip.AzureBackup
 				if (blobs.ContainsKey(blobUri))
 				{
 					CloudBlob blob = blobs[blobUri];
-					if(fileInfo.LastWriteTimeUtc != blob.GetFileLastModifiedUtc())
+					if (fileInfo.LastWriteTimeUtc != blob.GetFileLastModifiedUtc())
 					{
 						if (blob.Properties.BlobType == BlobType.PageBlob) //Block blobs don't have ContentMD5 set
 						{
 							string contentMD5 = this._fileSystem.GetMD5HashForFile(fileInfo.FullPath);
 							if (contentMD5 == blob.Properties.ContentMD5)
 							{
-								provider.HandleUpdateModifiedDate(blob, fileInfo);
+								actions.Enqueue(provider.CreateUpdateModifiedDateSyncAction(blob, fileInfo));
 							}
 							else
 							{
-								provider.HandleUpdate(blob, fileInfo);
+								actions.Enqueue(provider.CreateUpdateSyncAction(blob, fileInfo));
 							}
 						}
 						else
 						{
-							provider.HandleUpdate(blob, fileInfo);
+							actions.Enqueue(provider.CreateUpdateSyncAction(blob, fileInfo));
 						}
 					}
 					blobs.Remove(blobUri);
 				}
 				else
 				{
-					provider.HandleBlobNotExists(blobContainer, fileInfo);
+					actions.Enqueue(provider.CreateBlobNotExistsSyncAction(blobContainer, fileInfo));
 				}
 			}
 
 			foreach (var item in blobs)
 			{
-				provider.HandleFileNotExists(item.Value, directoryPath);
+				actions.Enqueue(provider.CreateFileNotExistsSyncAction(item.Value, directoryPath));
 			}
 
-			provider.WriteStatistics();
+			return actions;
 		}
 
-		private ISyncronizationProvider GetProvider(AzureSyncAction action)
+		private ISyncronizationProvider GetProvider(SyncAction action)
 		{
 			//TODO - Place in container?
 			switch (action)
 			{
-				case AzureSyncAction.Download:
-				case AzureSyncAction.DownloadDelete:
+				case SyncAction.Download:
 					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileSystem, this._storage);
-				case AzureSyncAction.DownloadKeep:
+				case SyncAction.DownloadKeep:
 					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
-				case AzureSyncAction.Upload:
+				case SyncAction.Upload:
 					return new UploadSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				default:
 					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileSystem);

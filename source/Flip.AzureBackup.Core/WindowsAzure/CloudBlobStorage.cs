@@ -17,9 +17,8 @@ namespace Flip.AzureBackup.WindowsAzure
 	/// </summary>
 	public sealed class CloudBlobStorage : ICloudBlobStorage
 	{
-		public CloudBlobStorage(ILogger logger, IFileSystem fileSystem)
+		public CloudBlobStorage(IFileSystem fileSystem)
 		{
-			this._logger = logger;
 			this._fileSystem = fileSystem;
 		}
 
@@ -161,7 +160,6 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		private readonly ILogger _logger;
 		private readonly IFileSystem _fileSystem;
 		private static readonly int MaxBlockSize = 4.MBToBytes();
 		private static readonly long FileSizeThresholdInBytes = (4L).MBToBytes();
