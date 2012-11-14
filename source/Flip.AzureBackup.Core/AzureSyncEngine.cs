@@ -77,12 +77,19 @@ namespace Flip.AzureBackup
 				if (blobs.ContainsKey(blobUri))
 				{
 					CloudBlob blob = blobs[blobUri];
-					if (provider.HasBeenModified(blob, fileInfo))
+					if(fileInfo.LastWriteTimeUtc != blob.GetFileLastModifiedUtc())
 					{
-						string contentMD5 = this._fileSystem.GetMD5HashForFile(fileInfo.FullPath);
-						if (contentMD5 == blob.Properties.ContentMD5)
+						if (blob.Properties.BlobType == BlobType.PageBlob) //Block blobs don't have ContentMD5 set
 						{
-							provider.HandleUpdateModifiedDate(blob, fileInfo);
+							string contentMD5 = this._fileSystem.GetMD5HashForFile(fileInfo.FullPath);
+							if (contentMD5 == blob.Properties.ContentMD5)
+							{
+								provider.HandleUpdateModifiedDate(blob, fileInfo);
+							}
+							else
+							{
+								provider.HandleUpdate(blob, fileInfo);
+							}
 						}
 						else
 						{

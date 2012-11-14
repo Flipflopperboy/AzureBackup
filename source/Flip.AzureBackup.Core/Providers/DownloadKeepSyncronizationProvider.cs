@@ -59,6 +59,7 @@ namespace Flip.AzureBackup.Providers
 
 			this._logger.WriteLine("Downloading updated file " + blob.Uri.ToString() + "...");
 			blob.DownloadToFile(fileInfo.FullPath);
+			this._fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
 		}
 
 		public void HandleUpdateModifiedDate(CloudBlob blob, FileInformation fileInfo)
