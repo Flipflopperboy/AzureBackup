@@ -10,9 +10,8 @@ namespace Flip.AzureBackup.Providers
 {
 	public class DownloadKeepSyncronizationProvider : ISyncronizationProvider
 	{
-		public DownloadKeepSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
+		public DownloadKeepSyncronizationProvider(IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
-			this._logger = logger;
 			this._fileSystem = fileSystem;
 			this._blobStorage = storage;
 			this._statistics = new SyncronizationStatistics();
@@ -25,16 +24,16 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Keep Deleted Files"; }
 		}
 
-		//public virtual void WriteStatistics()
-		//{
-		//	this._logger.WriteLine("");
-		//	this._logger.WriteFixedLine('-');
-		//	this._logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
-		//	this._logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
-		//	this._logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
-		//	this._logger.WriteFixedLine('-');
-		//	this._logger.WriteLine("");
-		//}
+		public virtual void WriteStatistics(ILogger logger)
+		{
+			logger.WriteLine("");
+			logger.WriteFixedLine('-');
+			logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+			logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+			logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+			logger.WriteFixedLine('-');
+			logger.WriteLine("");
+		}
 
 		public bool InitializeDirectory(string path)
 		{
@@ -44,11 +43,13 @@ namespace Flip.AzureBackup.Providers
 
 		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedCount++;
 			return new UpdateFileSyncAction(_fileSystem, fileInfo, blob);
 		}
 
 		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
+			this._statistics.UpdatedModifiedDateCount++;
 			return new UpdateFileModifiedDateSyncAction(_fileSystem, fileInfo, blob);
 		}
 
@@ -59,12 +60,14 @@ namespace Flip.AzureBackup.Providers
 
 		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
 		{
-			return new CreateFileSyncAction(_fileSystem, _blobStorage, basePath, blob);
+			this._statistics.FileNotExistCount++;
+			string relativePath = blob.GetRelativeFilePath();
+			string fullPath = this._fileSystem.Combine(basePath, relativePath);
+			return new CreateFileSyncAction(_fileSystem, _blobStorage, fullPath, blob);
 		}
 
 
 
-		protected readonly ILogger _logger;
 		protected readonly IFileSystem _fileSystem;
 		protected readonly ICloudBlobStorage _blobStorage;
 		protected SyncronizationStatistics _statistics;

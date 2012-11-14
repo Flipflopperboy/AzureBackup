@@ -1,5 +1,6 @@
 ﻿using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
+using Flip.AzureBackup.Logging;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -9,6 +10,7 @@ namespace Flip.AzureBackup.Providers
 	public interface ISyncronizationProvider
 	{
 		string Description { get; }
+		void WriteStatistics(ILogger logger);
 		ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo);
 		ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo);
 		ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo);

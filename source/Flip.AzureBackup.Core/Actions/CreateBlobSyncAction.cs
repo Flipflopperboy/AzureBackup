@@ -6,7 +6,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup.Actions
 {
-	public sealed class CreateBlobSyncAction : ISyncAction
+	public sealed class CreateBlobSyncAction : SyncAction
 	{
 		public CreateBlobSyncAction(ICloudBlobStorage blobStorage, CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
@@ -15,12 +15,14 @@ namespace Flip.AzureBackup.Actions
 			_fileInfo = fileInfo;
 		}
 
-		public void Invoke()
+		public override void Invoke()
 		{
-			//this._logger.WriteLine("Uploading file " + fileInfo.FullPath + "...");
+			ReportProgress(_fileInfo.FullPath, "Uploading file...", 0);
 			_blobStorage.UploadFile(_blobContainer, _fileInfo);
-			//this._statistics.BlobNotExistCount++;
+			ReportProgress(_fileInfo.FullPath, "Uploaded file.", 1);
 		}
+
+
 
 		private readonly ICloudBlobStorage _blobStorage;
 		private readonly CloudBlobContainer _blobContainer;

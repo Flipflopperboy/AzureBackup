@@ -1,24 +1,27 @@
-﻿using Flip.AzureBackup.IO;
-using Microsoft.WindowsAzure.StorageClient;
+﻿using Microsoft.WindowsAzure.StorageClient;
 
 
 
 namespace Flip.AzureBackup.Actions
 {
-	public sealed class DeleteBlobSyncAction : ISyncAction
+	public sealed class DeleteBlobSyncAction : SyncAction
 	{
-		public DeleteBlobSyncAction(CloudBlob blob)
+		public DeleteBlobSyncAction(string fileFullPath, CloudBlob blob)
 		{
+			_fileFullPath = fileFullPath;
 			_blob = blob;
 		}
 
-		public void Invoke()
+		public override void Invoke()
 		{
-			//this._statistics.FileNotExistCount++;
-			//this._logger.WriteLine("Deleting blob " + blob.Uri.ToString() + "...");
+			ReportProgress(_fileFullPath, "Deleting blob...", 0);
 			_blob.DeleteIfExists();
+			ReportProgress(_fileFullPath, "Deleted blob.", 1);
 		}
 
+
+
+		private readonly string _fileFullPath;
 		private readonly CloudBlob _blob;
 	}
 }

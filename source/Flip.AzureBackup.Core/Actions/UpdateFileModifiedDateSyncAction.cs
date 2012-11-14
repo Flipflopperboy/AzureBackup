@@ -5,7 +5,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup.Actions
 {
-	public sealed class UpdateFileModifiedDateSyncAction : ISyncAction
+	public sealed class UpdateFileModifiedDateSyncAction : SyncAction
 	{
 		public UpdateFileModifiedDateSyncAction(IFileSystem fileSystem, FileInformation fileInfo, CloudBlob blob)
 		{
@@ -14,15 +14,17 @@ namespace Flip.AzureBackup.Actions
 			_blob = blob;
 		}
 
-		public void Invoke()
+		public override void Invoke()
 		{
-			//this._statistics.UpdatedModifiedDateCount++;
-			//this._logger.WriteLine("Updating modification date for file " + fileInfo.FullPath + "...");
-			this._fileSystem.SetLastWriteTimeUtc(_fileInfo.FullPath, _blob.GetFileLastModifiedUtc());
+			ReportProgress(_fileInfo.FullPath, "Updating file modification date...", 0);
+			_fileSystem.SetLastWriteTimeUtc(_fileInfo.FullPath, _blob.GetFileLastModifiedUtc());
+			ReportProgress(_fileInfo.FullPath, "Updated file modification date.", 1);
 		}
 
+
+
 		private readonly IFileSystem _fileSystem;
-		private readonly FileInformation _fileInfo; 
+		private readonly FileInformation _fileInfo;
 		private readonly CloudBlob _blob;
 	}
 }

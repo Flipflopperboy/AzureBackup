@@ -1,8 +1,8 @@
 ﻿namespace Flip.AzureBackup.Actions
 {
-	public sealed class EmptySyncAction : ISyncAction
+	public sealed class EmptySyncAction : SyncAction
 	{
-		public void Invoke()
+		public override void Invoke()
 		{
 		}
 	}

@@ -48,14 +48,16 @@ namespace Flip.AzureBackup
 
 				while (actions.Count > 0)
 				{
-					actions.Dequeue().Invoke();
+					ISyncAction action = actions.Dequeue();
+					action.Progress += OnActionProgress;
+					action.Invoke();
 				}
 
 				this._logger.WriteLine("Done...");
 			}
 			else
 			{
-				this._logger.WriteLine("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
+				throw new Exception("Invalid cloud connection string '" + settings.CloudConnectionString + "'.");
 			}
 		}
 
@@ -115,6 +117,8 @@ namespace Flip.AzureBackup
 				actions.Enqueue(provider.CreateFileNotExistsSyncAction(item.Value, directoryPath));
 			}
 
+			provider.WriteStatistics(_logger);
+
 			return actions;
 		}
 
@@ -124,13 +128,23 @@ namespace Flip.AzureBackup
 			switch (action)
 			{
 				case SyncAction.Download:
-					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileSystem, this._storage);
+					return new DownloadDeleteSyncronizationProvider(this._fileSystem, this._storage);
 				case SyncAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
+					return new DownloadKeepSyncronizationProvider(this._fileSystem, this._storage);
 				case SyncAction.Upload:
-					return new UploadSyncronizationProvider(this._logger, this._fileSystem, this._storage);
+					return new UploadSyncronizationProvider(this._fileSystem, this._storage);
 				default:
-					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileSystem);
+					return new UploadAnalysisSyncronizationProvider(this._fileSystem);
+			}
+		}
+
+		private void OnActionProgress(object sender, ActionProgressEventArgs e)
+		{
+			if (e.Fraction == 0)
+			{
+				this._logger.WriteLine(e.Message);
+				this._logger.WriteLine(e.FileFullPath);
+				this._logger.WriteLine("");
 			}
 		}
 

@@ -4,7 +4,7 @@
 
 namespace Flip.AzureBackup.Actions
 {
-	public sealed class DeleteFileSyncAction : ISyncAction
+	public sealed class DeleteFileSyncAction : SyncAction
 	{
 		public DeleteFileSyncAction(IFileSystem fileSystem, FileInformation fileInfo)
 		{
@@ -12,11 +12,11 @@ namespace Flip.AzureBackup.Actions
 			_fileInfo = fileInfo;
 		}
 
-		public void Invoke()
+		public override void Invoke()
 		{
-			//this._statistics.BlobNotExistCount++;
-			//this._logger.WriteLine("Deleting file " + fileInfo.FullPath + "...");
+			ReportProgress(_fileInfo.FullPath, "Deleting file...", 0);
 			_fileSystem.DeleteFile(_fileInfo.FullPath);
+			ReportProgress(_fileInfo.FullPath, "File deleted.", 1);
 		}
 
 		private readonly IFileSystem _fileSystem;

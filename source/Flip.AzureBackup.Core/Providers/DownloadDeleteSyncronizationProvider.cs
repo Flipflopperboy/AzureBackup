@@ -10,8 +10,8 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class DownloadDeleteSyncronizationProvider : DownloadKeepSyncronizationProvider
 	{
-		public DownloadDeleteSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
-			: base(logger, fileSystem, storage)
+		public DownloadDeleteSyncronizationProvider(IFileSystem fileSystem, ICloudBlobStorage storage)
+			: base(fileSystem, storage)
 		{
 		}
 
@@ -22,20 +22,21 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Delete Deleted Files"; }
 		}
 
-		//public override void WriteStatistics()
-		//{
-		//	this._logger.WriteLine("");
-		//	this._logger.WriteFixedLine('-');
-		//	this._logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
-		//	this._logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
-		//	this._logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
-		//	this._logger.WriteFixedLine("Deleted files:", this._statistics.BlobNotExistCount);
-		//	this._logger.WriteFixedLine('-');
-		//	this._logger.WriteLine("");
-		//}
+		public override void WriteStatistics(ILogger logger)
+		{
+			logger.WriteLine("");
+			logger.WriteFixedLine('-');
+			logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+			logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+			logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+			logger.WriteFixedLine("Deleted files:", this._statistics.BlobNotExistCount);
+			logger.WriteFixedLine('-');
+			logger.WriteLine("");
+		}
 
 		public override ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
+			this._statistics.BlobNotExistCount++;
 			return new DeleteFileSyncAction(_fileSystem, fileInfo);
 		}
 	}

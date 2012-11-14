@@ -50,7 +50,9 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="Actions\ActionProgressEventArgs.cs" />
     <Compile Include="Actions\EmptySyncAction.cs" />
+    <Compile Include="Actions\SyncAction.cs" />
     <Compile Include="Actions\UpdateFileSyncAction.cs" />
     <Compile Include="Actions\CreateFileSyncAction.cs" />
     <Compile Include="Actions\UpdateFileModifiedDateSyncAction.cs" />
