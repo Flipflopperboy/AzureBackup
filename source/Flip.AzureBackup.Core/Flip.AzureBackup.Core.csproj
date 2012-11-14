@@ -67,8 +67,8 @@
     <Compile Include="Logging\LoggerExtensions.cs" />
     <Compile Include="Providers\UploadAnalysisSyncronizationProvider.cs" />
     <Compile Include="WindowsAzure\CloudBlobStorage.cs" />
-    <Compile Include="CloudBlobContainerExtensions.cs" />
-    <Compile Include="CloudBlobExtensions.cs" />
+    <Compile Include="WindowsAzure\CloudBlobContainerExtensions.cs" />
+    <Compile Include="WindowsAzure\CloudBlobExtensions.cs" />
     <Compile Include="Providers\DownloadKeepSyncronizationProvider.cs" />
     <Compile Include="Providers\DownloadDeleteSyncronizationProvider.cs" />
     <Compile Include="Providers\SyncronizationStatistics.cs" />

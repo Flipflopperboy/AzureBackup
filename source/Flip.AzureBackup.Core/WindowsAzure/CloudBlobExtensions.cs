@@ -4,7 +4,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 
 
-namespace Flip.AzureBackup
+namespace Flip.AzureBackup.WindowsAzure
 {
 	internal static class CloudBlobExtensions
 	{

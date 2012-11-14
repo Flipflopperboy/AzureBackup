@@ -1,4 +1,5 @@
 ﻿using Flip.AzureBackup.IO;
+using Flip.AzureBackup.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
 
