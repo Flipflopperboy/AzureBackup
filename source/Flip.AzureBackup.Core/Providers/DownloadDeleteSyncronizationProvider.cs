@@ -22,16 +22,16 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Delete Deleted Files"; }
 		}
 
-		public override void WriteStatistics(ILog logger)
+		public override void WriteStatistics(ILog log)
 		{
-			logger.WriteLine("");
-			logger.WriteFixedLine('-');
-			logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
-			logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
-			logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
-			logger.WriteFixedLine("Deleted files:", this._statistics.BlobNotExistCount);
-			logger.WriteFixedLine('-');
-			logger.WriteLine("");
+			log.WriteLine("");
+			log.WriteFixedLine('-');
+			log.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+			log.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+			log.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+			log.WriteFixedLine("Deleted files:", this._statistics.BlobNotExistCount);
+			log.WriteFixedLine('-');
+			log.WriteLine("");
 		}
 
 		public override ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)

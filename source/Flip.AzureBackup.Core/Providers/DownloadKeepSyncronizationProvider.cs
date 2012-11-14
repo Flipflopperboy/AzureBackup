@@ -24,15 +24,15 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Keep Deleted Files"; }
 		}
 
-		public virtual void WriteStatistics(ILog logger)
+		public virtual void WriteStatistics(ILog log)
 		{
-			logger.WriteLine("");
-			logger.WriteFixedLine('-');
-			logger.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
-			logger.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
-			logger.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
-			logger.WriteFixedLine('-');
-			logger.WriteLine("");
+			log.WriteLine("");
+			log.WriteFixedLine('-');
+			log.WriteFixedLine("New files:", this._statistics.FileNotExistCount);
+			log.WriteFixedLine("Updated files:", this._statistics.UpdatedCount);
+			log.WriteFixedLine("Updated file dates:", this._statistics.UpdatedModifiedDateCount);
+			log.WriteFixedLine('-');
+			log.WriteLine("");
 		}
 
 		public bool InitializeDirectory(string path)

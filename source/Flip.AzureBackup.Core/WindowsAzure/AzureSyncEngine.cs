@@ -15,9 +15,9 @@ namespace Flip.AzureBackup.WindowsAzure
 {
 	public class AzureSyncEngine : ISyncEngine
 	{
-		public AzureSyncEngine(ILog logger, IFileSystem fileSystem, ICloudBlobStorage storage)
+		public AzureSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
-			this._logger = logger;
+			this._log = log;
 			this._fileSystem = fileSystem;
 			this._storage = storage;
 		}
@@ -41,8 +41,8 @@ namespace Flip.AzureBackup.WindowsAzure
 
 				blobContainer.CreateIfNotExist();
 
-				this._logger.WriteLine(provider.Description);
-				this._logger.WriteLine("");
+				this._log.WriteLine(provider.Description);
+				this._log.WriteLine("");
 
 				Queue<ISyncAction> actions = GetActions(settings.DirectoryPath, blobContainer, provider);
 
@@ -53,7 +53,7 @@ namespace Flip.AzureBackup.WindowsAzure
 					action.Invoke();
 				}
 
-				this._logger.WriteLine("Done...");
+				this._log.WriteLine("Done...");
 			}
 			else
 			{
@@ -117,7 +117,7 @@ namespace Flip.AzureBackup.WindowsAzure
 				actions.Enqueue(provider.CreateFileNotExistsSyncAction(item.Value, directoryPath));
 			}
 
-			provider.WriteStatistics(_logger);
+			provider.WriteStatistics(_log);
 
 			return actions;
 		}
@@ -142,15 +142,15 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			if (e.Fraction == 0)
 			{
-				this._logger.WriteLine(e.Message);
-				this._logger.WriteLine(e.FileFullPath);
-				this._logger.WriteLine("");
+				this._log.WriteLine(e.Message);
+				this._log.WriteLine(e.FileFullPath);
+				this._log.WriteLine("");
 			}
 		}
 
 
 
-		private readonly ILog _logger;
+		private readonly ILog _log;
 		private readonly IFileSystem _fileSystem;
 		private readonly ICloudBlobStorage _storage;
 		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions

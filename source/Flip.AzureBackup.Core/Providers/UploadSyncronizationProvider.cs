@@ -25,16 +25,16 @@ namespace Flip.AzureBackup.Providers
 			get { return "Upload"; }
 		}
 
-		public void WriteStatistics(ILog logger)
+		public void WriteStatistics(ILog log)
 		{
-			logger.WriteLine("");
-			logger.WriteFixedLine('-');
-			logger.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
-			logger.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
-			logger.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
-			logger.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
-			logger.WriteFixedLine('-');
-			logger.WriteLine("");
+			log.WriteLine("");
+			log.WriteFixedLine('-');
+			log.WriteFixedLine("New blobs:", this._statistics.BlobNotExistCount);
+			log.WriteFixedLine("Blobs updated:", this._statistics.UpdatedCount);
+			log.WriteFixedLine("Blob dates updated:", this._statistics.UpdatedModifiedDateCount);
+			log.WriteFixedLine("Blobs deleted:", this._statistics.FileNotExistCount);
+			log.WriteFixedLine('-');
+			log.WriteLine("");
 		}
 
 		public bool InitializeDirectory(string path)

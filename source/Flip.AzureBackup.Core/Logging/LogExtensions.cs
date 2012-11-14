@@ -2,14 +2,14 @@
 {
 	public static class LogExtensions
 	{
-		public static void WriteFixedLine(this ILog logger, string description, int value)
+		public static void WriteFixedLine(this ILog log, string description, int value)
 		{
-			logger.WriteLine(description + value.ToString().PadLeft(lineLength - description.Length, ' '));
+			log.WriteLine(description + value.ToString().PadLeft(lineLength - description.Length, ' '));
 		}
 
-		public static void WriteFixedLine(this ILog logger, char repeatChar)
+		public static void WriteFixedLine(this ILog log, char repeatChar)
 		{
-			logger.WriteLine("".PadLeft(lineLength, repeatChar));
+			log.WriteLine("".PadLeft(lineLength, repeatChar));
 		}
 
 
