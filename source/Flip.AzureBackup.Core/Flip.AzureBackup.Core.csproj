@@ -82,7 +82,7 @@
     <Compile Include="Logging\TextWriterLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncAction.cs" />
-    <Compile Include="AzureSyncEngine.cs" />
+    <Compile Include="WindowsAzure\AzureSyncEngine.cs" />
     <Compile Include="SyncSettings.cs" />
     <Compile Include="WindowsAzure\ICloudBlobStorage.cs" />
   </ItemGroup>

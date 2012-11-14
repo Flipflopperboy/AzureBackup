@@ -11,7 +11,7 @@ using Microsoft.WindowsAzure.StorageClient;
 
 
 
-namespace Flip.AzureBackup
+namespace Flip.AzureBackup.WindowsAzure
 {
 	public class AzureSyncEngine : ISyncEngine
 	{
