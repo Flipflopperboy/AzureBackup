@@ -17,9 +17,8 @@ namespace Flip.AzureBackup.Actions
 
 		public override void Invoke()
 		{
-			ReportProgress(_fileInfo.FullPath, "Uploading file...", 0);
-			_blobStorage.UploadFile(_blobContainer, _fileInfo);
-			ReportProgress(_fileInfo.FullPath, "Uploaded file.", 1);
+			_blobStorage.UploadFile(_blobContainer, _fileInfo, fraction =>
+				ReportProgress(_fileInfo.FullPath, fraction == 0 ? "Uploading file..." : "", fraction));
 		}
 
 

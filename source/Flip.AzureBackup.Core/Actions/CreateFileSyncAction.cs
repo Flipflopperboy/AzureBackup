@@ -18,9 +18,9 @@ namespace Flip.AzureBackup.Actions
 
 		public override void Invoke()
 		{
-			ReportProgress(_fileFullPath, "Downloading new file...", 0);
 			_fileSystem.EnsureFileDirectory(_fileFullPath);
-			_blobStorage.DownloadFile(_blob, _fileFullPath, fraction => ReportProgress(_fileFullPath, "", fraction));
+			_blobStorage.DownloadFile(_blob, _fileFullPath, fraction =>
+				ReportProgress(_fileFullPath, fraction == 0 ? "Downloading new file..." : "", fraction));
 			_fileSystem.SetLastWriteTimeUtc(_fileFullPath, _blob.GetFileLastModifiedUtc());
 		}
 

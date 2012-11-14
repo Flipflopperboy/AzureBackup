@@ -26,6 +26,8 @@ namespace Flip.AzureBackup.WindowsAzure
 
 		public void DownloadFile(CloudBlob blob, string path, Action<decimal> progressCallback)
 		{
+			progressCallback(0);
+
 			if (blob.Properties.Length > FileSizeThresholdInBytes)
 			{
 				DownloadFileInChunks(blob.ToBlockBlob, path, progressCallback);
@@ -37,34 +39,42 @@ namespace Flip.AzureBackup.WindowsAzure
 			}
 		}
 
-		public void UploadFile(CloudBlob blob, FileInformation fileInfo)
+		public void UploadFile(CloudBlob blob, FileInformation fileInfo, Action<decimal> progressCallback)
 		{
+			progressCallback(0);
+
 			if (fileInfo.SizeInBytes > FileSizeThresholdInBytes)
 			{
-				UploadFileInChunks(blob.ToBlockBlob, fileInfo);
+				UploadFileInChunks(blob.ToBlockBlob, fileInfo, progressCallback);
 			}
 			else
 			{
 				blob.UploadFile(fileInfo);
+				progressCallback(1);
 			}
 		}
 
-		public void UploadFile(CloudBlobContainer blobContainer, FileInformation fileInfo)
+		public void UploadFile(CloudBlobContainer blobContainer, FileInformation fileInfo, Action<decimal> progressCallback)
 		{
+			progressCallback(0);
+
 			if (fileInfo.SizeInBytes > FileSizeThresholdInBytes)
 			{
 				var blockBlob = blobContainer.GetBlockBlobReference(fileInfo.BlobName);
 				blockBlob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, false);
-				UploadFileInChunks(blockBlob, fileInfo);
+				UploadFileInChunks(blockBlob, fileInfo, progressCallback);
 			}
 			else
 			{
 				CloudBlob blob = blobContainer.GetBlobReference(fileInfo.BlobName);
 				blob.UploadFile(fileInfo);
+				progressCallback(1);
 			}
 		}
 
-		private void UploadFileInChunks(CloudBlockBlob blockBlob, FileInformation fileInfo)
+
+
+		private void UploadFileInChunks(CloudBlockBlob blockBlob, FileInformation fileInfo, Action<decimal> progressCallback)
 		{
 			List<string> blockIds = new List<string>();
 
@@ -72,10 +82,13 @@ namespace Flip.AzureBackup.WindowsAzure
 			{
 				using (BinaryReader reader = new BinaryReader(stream))
 				{
-					int blockCounter = 0;
+					int counter = 0;
 					int bytesSent = 0;
 					int currentBlockSize = MaxBlockSize;
 					int exceptionCount = 0;
+
+					int parts = (int)Math.Ceiling((decimal)fileInfo.SizeInBytes / (decimal)MaxBlockSize);
+					decimal rangeFraction = 1 / (decimal)parts;
 
 					try
 					{
@@ -86,7 +99,7 @@ namespace Flip.AzureBackup.WindowsAzure
 								currentBlockSize = (int)fileInfo.SizeInBytes - bytesSent;
 							}
 
-							string blockId = blockCounter.ToString().PadLeft(32, '0');
+							string blockId = counter.ToString().PadLeft(32, '0');
 							byte[] bytes = reader.ReadBytes(currentBlockSize);
 							using (var memoryStream = new MemoryStream(bytes))
 							{
@@ -94,7 +107,8 @@ namespace Flip.AzureBackup.WindowsAzure
 								blockBlob.PutBlock(blockId, memoryStream, bytes.GetMD5Hash());
 							}
 							bytesSent += currentBlockSize;
-							blockCounter++;
+							counter++;
+							progressCallback(counter < parts ? rangeFraction * counter : 1);
 						}
 					}
 					catch (Exception ex)
