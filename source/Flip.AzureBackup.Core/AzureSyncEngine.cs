@@ -12,9 +12,9 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup
 {
-	public class Synchronizer : ISynchronizer
+	public class AzureSyncEngine : ISynchronizer
 	{
-		public Synchronizer(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
+		public AzureSyncEngine(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
 			this._fileSystem = fileAccessor;
@@ -23,7 +23,7 @@ namespace Flip.AzureBackup
 
 
 
-		public void Synchronize(SyncronizationSettings settings)
+		public void Sync(AzureSyncSettings settings)
 		{
 			ISyncronizationProvider provider = GetProvider(settings.Action);
 
@@ -51,7 +51,7 @@ namespace Flip.AzureBackup
 				provider.WriteStart();
 				this._logger.WriteLine("");
 
-				Synchronize(settings.DirectoryPath, files, blobContainer, provider);
+				Sync(settings.DirectoryPath, files, blobContainer, provider);
 
 				this._logger.WriteLine("Done...");
 			}
@@ -61,7 +61,7 @@ namespace Flip.AzureBackup
 			}
 		}
 
-		private void Synchronize(
+		private void Sync(
 			string directoryPath,
 			List<FileInformation> files,
 			CloudBlobContainer blobContainer,
@@ -73,7 +73,7 @@ namespace Flip.AzureBackup
 
 			foreach (var fileInfo in files)
 			{
-				var blobUri = blobContainer.GetBlobUri(fileInfo.RelativePath);
+				var blobUri = blobContainer.GetBlobUri(fileInfo.BlobName);
 				if (blobs.ContainsKey(blobUri))
 				{
 					CloudBlob blob = blobs[blobUri];
@@ -105,17 +105,17 @@ namespace Flip.AzureBackup
 			provider.WriteStatistics();
 		}
 
-		private ISyncronizationProvider GetProvider(SynchronizationAction action)
+		private ISyncronizationProvider GetProvider(AzureSyncAction action)
 		{
 			//TODO - Place in container?
 			switch (action)
 			{
-				case SynchronizationAction.Download:
-				case SynchronizationAction.DownloadDelete:
+				case AzureSyncAction.Download:
+				case AzureSyncAction.DownloadDelete:
 					return new DownloadDeleteSyncronizationProvider(this._logger, this._fileSystem, this._storage);
-				case SynchronizationAction.DownloadKeep:
+				case AzureSyncAction.DownloadKeep:
 					return new DownloadKeepSyncronizationProvider(this._logger, this._fileSystem, this._storage);
-				case SynchronizationAction.Upload:
+				case AzureSyncAction.Upload:
 					return new UploadSyncronizationProvider(this._logger, this._fileSystem, this._storage);
 				default:
 					return new UploadAnalysisSyncronizationProvider(this._logger, this._fileSystem);

@@ -1,6 +1,6 @@
 ﻿namespace Flip.AzureBackup
 {
-	public enum SynchronizationAction
+	public enum AzureSyncAction
 	{
 		Analysis,
 		Upload,

@@ -53,18 +53,16 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			if (fileInfo.SizeInBytes > FileSizeThresholdInBytes)
 			{
-				var blockBlob = blobContainer.GetBlockBlobReference(fileInfo.RelativePath);
+				var blockBlob = blobContainer.GetBlockBlobReference(fileInfo.BlobName);
 				blockBlob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, false);
 				UploadFileInChunks(blockBlob, fileInfo);
 			}
 			else
 			{
-				CloudBlob blob = blobContainer.GetBlobReference(fileInfo.RelativePath);
+				CloudBlob blob = blobContainer.GetBlobReference(fileInfo.BlobName);
 				blob.UploadFile(fileInfo);
 			}
 		}
-
-
 
 		private void UploadFileInChunks(CloudBlockBlob blockBlob, FileInformation fileInfo)
 		{

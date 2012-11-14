@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Flip.AzureBackup</RootNamespace>
     <AssemblyName>Flip.AzureBackup.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -69,9 +69,9 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\TextWriterLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SynchronizationAction.cs" />
-    <Compile Include="Synchronizer.cs" />
-    <Compile Include="SyncronizationSettings.cs" />
+    <Compile Include="AzureSyncAction.cs" />
+    <Compile Include="AzureSyncEngine.cs" />
+    <Compile Include="AzureSyncSettings.cs" />
     <Compile Include="WindowsAzure\ICloudBlobStorage.cs" />
   </ItemGroup>
   <ItemGroup>

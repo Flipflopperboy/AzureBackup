@@ -2,6 +2,6 @@
 {
 	public interface ISynchronizer
 	{
-		void Synchronize(SyncronizationSettings settings);
+		void Sync(AzureSyncSettings settings);
 	}
 }

@@ -34,7 +34,7 @@ namespace Flip.AzureBackup
 		{
 			string filePath = blob.Uri.OriginalString;
 			filePath = filePath.Substring(blob.Container.Uri.OriginalString.Length + 1);
-			filePath = filePath.Replace('/', '\\');
+			filePath = Uri.UnescapeDataString(filePath);
 			filePath = Uri.UnescapeDataString(filePath);
 			return filePath;
 		}
