@@ -20,9 +20,8 @@ namespace Flip.AzureBackup.Actions
 		{
 			ReportProgress(_fileFullPath, "Downloading new file...", 0);
 			_fileSystem.EnsureFileDirectory(_fileFullPath);
-			_blobStorage.DownloadFile(_blob, _fileFullPath);
+			_blobStorage.DownloadFile(_blob, _fileFullPath, fraction => ReportProgress(_fileFullPath, "", fraction));
 			_fileSystem.SetLastWriteTimeUtc(_fileFullPath, _blob.GetFileLastModifiedUtc());
-			ReportProgress(_fileFullPath, "Downloaded new file.", 1);
 		}
 
 

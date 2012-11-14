@@ -24,15 +24,16 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		public void DownloadFile(CloudBlob blob, string path)
+		public void DownloadFile(CloudBlob blob, string path, Action<decimal> progressCallback)
 		{
 			if (blob.Properties.Length > FileSizeThresholdInBytes)
 			{
-				DownloadFileInChunks(blob.ToBlockBlob, path);
+				DownloadFileInChunks(blob.ToBlockBlob, path, progressCallback);
 			}
 			else
 			{
 				blob.DownloadToFile(path);
+				progressCallback(1);
 			}
 		}
 
@@ -110,32 +111,34 @@ namespace Flip.AzureBackup.WindowsAzure
 			blockBlob.PutBlockList(blockIds);
 		}
 
-		private void DownloadFileInChunks(CloudBlob blob, string path)
+		private void DownloadFileInChunks(CloudBlob blob, string path, Action<decimal> progressCallback)
 		{
-			long blobLength = blob.Properties.Length;
-			int rangeStart = 0;
-			int currentBlockSize = MaxBlockSize;
+			int counter = 0;
 			int exceptionCount = 0;
+
+			int rangeStart = 0;
+			int rangeEnd = 0;
+
+			long blobLength = blob.Properties.Length;
+			int parts = (int)Math.Ceiling((decimal)blobLength / (decimal)MaxBlockSize);
+			decimal rangeFraction = 1 / (decimal)parts;
 
 			using (Stream fileStream = this._fileSystem.GetWriteFileStream(path))
 			{
 				try
 				{
-					while (rangeStart < blobLength)
+					while (counter < parts)
 					{
-						if ((rangeStart + currentBlockSize) > blobLength)
-						{
-							currentBlockSize = (int)blobLength - rangeStart;
-						}
+						rangeStart = counter * MaxBlockSize;
+						rangeEnd = rangeStart + MaxBlockSize - 1;
+						rangeEnd = rangeEnd > blobLength ? rangeStart + (int)blobLength - rangeStart - 1 : rangeEnd;
 
 						HttpWebRequest blobGetRequest = BlobRequest.Get(blob.Uri, 60, null, null);
-						blobGetRequest.Headers.Add("x-ms-range", string.Format(System.Globalization.CultureInfo.InvariantCulture, "bytes={0}-{1}", rangeStart, rangeStart + currentBlockSize - 1));
+						blobGetRequest.Headers.Add("x-ms-range", string.Format(System.Globalization.CultureInfo.InvariantCulture, "bytes={0}-{1}", rangeStart, rangeEnd));
 
-						// Sign request.
 						StorageCredentials credentials = blob.ServiceClient.Credentials;
 						credentials.SignRequest(blobGetRequest);
 
-						// Read chunk.
 						using (HttpWebResponse response = blobGetRequest.GetResponse() as HttpWebResponse)
 						{
 							using (Stream stream = response.GetResponseStream())
@@ -143,8 +146,8 @@ namespace Flip.AzureBackup.WindowsAzure
 								stream.CopyTo(fileStream);
 							}
 						}
-
-						rangeStart += currentBlockSize;
+						counter++;
+						progressCallback(counter < parts ? rangeFraction * counter : 1);
 					}
 				}
 				catch (Exception ex)
@@ -152,7 +155,7 @@ namespace Flip.AzureBackup.WindowsAzure
 					exceptionCount++;
 					if (exceptionCount >= 100)
 					{
-						throw new Exception("Could not download file", ex);
+						throw new Exception("Could not download file '" + path + "'.", ex);
 					}
 				}
 			}

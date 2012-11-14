@@ -19,7 +19,7 @@ namespace Flip.AzureBackup.WindowsAzure
 		{
 			this._log = log;
 			this._fileSystem = fileSystem;
-			this._storage = storage;
+			this._blobStorage = storage;
 		}
 
 
@@ -128,11 +128,11 @@ namespace Flip.AzureBackup.WindowsAzure
 			switch (action)
 			{
 				case SyncAction.Download:
-					return new DownloadDeleteSyncronizationProvider(this._fileSystem, this._storage);
+					return new DownloadDeleteSyncronizationProvider(this._fileSystem, this._blobStorage);
 				case SyncAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(this._fileSystem, this._storage);
+					return new DownloadKeepSyncronizationProvider(this._fileSystem, this._blobStorage);
 				case SyncAction.Upload:
-					return new UploadSyncronizationProvider(this._fileSystem, this._storage);
+					return new UploadSyncronizationProvider(this._fileSystem, this._blobStorage);
 				default:
 					return new UploadAnalysisSyncronizationProvider(this._fileSystem);
 			}
@@ -144,7 +144,16 @@ namespace Flip.AzureBackup.WindowsAzure
 			{
 				this._log.WriteLine(e.Message);
 				this._log.WriteLine(e.FileFullPath);
+				this._log.WriteLine(e.Fraction.ToString("P0"));
+			}
+			else if (e.Fraction == 1)
+			{
+				this._log.WriteLine(e.Fraction.ToString("P0"));
 				this._log.WriteLine("");
+			}
+			else
+			{
+				this._log.WriteLine(e.Fraction.ToString("P0"));
 			}
 		}
 
@@ -152,7 +161,7 @@ namespace Flip.AzureBackup.WindowsAzure
 
 		private readonly ILog _log;
 		private readonly IFileSystem _fileSystem;
-		private readonly ICloudBlobStorage _storage;
+		private readonly ICloudBlobStorage _blobStorage;
 		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
 		{
 			UseFlatBlobListing = true,
