@@ -1,6 +1,6 @@
 ﻿namespace Flip.AzureBackup.Logging
 {
-	public interface ILogger
+	public interface ILog
 	{
 		void WriteLine(string s);
 	}

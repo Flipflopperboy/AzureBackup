@@ -15,7 +15,7 @@ namespace Flip.AzureBackup.WindowsAzure
 {
 	public class AzureSyncEngine : ISyncEngine
 	{
-		public AzureSyncEngine(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
+		public AzureSyncEngine(ILog logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
 			this._fileSystem = fileSystem;
@@ -150,7 +150,7 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		private readonly ILogger _logger;
+		private readonly ILog _logger;
 		private readonly IFileSystem _fileSystem;
 		private readonly ICloudBlobStorage _storage;
 		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions

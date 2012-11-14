@@ -10,7 +10,7 @@ namespace Flip.AzureBackup.Providers
 	public interface ISyncronizationProvider
 	{
 		string Description { get; }
-		void WriteStatistics(ILogger logger);
+		void WriteStatistics(ILog logger);
 		ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo);
 		ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo);
 		ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo);

@@ -24,7 +24,7 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Keep Deleted Files"; }
 		}
 
-		public virtual void WriteStatistics(ILogger logger)
+		public virtual void WriteStatistics(ILog logger)
 		{
 			logger.WriteLine("");
 			logger.WriteFixedLine('-');

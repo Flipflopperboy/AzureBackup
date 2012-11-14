@@ -2,9 +2,9 @@
 
 namespace Flip.AzureBackup.Logging
 {
-	public class TextWriterLogger : ILogger
+	public class TextWriterLog : ILog
 	{
-		public TextWriterLogger(TextWriter textWriter)
+		public TextWriterLog(TextWriter textWriter)
 		{
 			this._textWriter = textWriter;
 		}

@@ -64,7 +64,7 @@
     <Compile Include="Actions\UpdateBlobSyncAction.cs" />
     <Compile Include="WindowsAzure\ByteExtensions.cs" />
     <Compile Include="WindowsAzure\NumberExtensions.cs" />
-    <Compile Include="Logging\LoggerExtensions.cs" />
+    <Compile Include="Logging\LogExtensions.cs" />
     <Compile Include="Providers\UploadAnalysisSyncronizationProvider.cs" />
     <Compile Include="WindowsAzure\CloudBlobStorage.cs" />
     <Compile Include="WindowsAzure\CloudBlobContainerExtensions.cs" />
@@ -78,8 +78,8 @@
     <Compile Include="IO\FileInformation.cs" />
     <Compile Include="ISyncEngine.cs" />
     <Compile Include="Providers\ISyncronizationProvider.cs" />
-    <Compile Include="Logging\ILogger.cs" />
-    <Compile Include="Logging\TextWriterLogger.cs" />
+    <Compile Include="Logging\ILog.cs" />
+    <Compile Include="Logging\TextWriterLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncAction.cs" />
     <Compile Include="WindowsAzure\AzureSyncEngine.cs" />

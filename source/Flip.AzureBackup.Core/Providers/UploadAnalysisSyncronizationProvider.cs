@@ -23,7 +23,7 @@ namespace Flip.AzureBackup.Providers
 			get { return "Analysis"; }
 		}
 
-		public void WriteStatistics(ILogger logger)
+		public void WriteStatistics(ILog logger)
 		{
 			logger.WriteLine("");
 			logger.WriteFixedLine('-');

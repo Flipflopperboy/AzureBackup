@@ -22,7 +22,7 @@ namespace Flip.AzureBackup.Providers
 			get { return "Download - Delete Deleted Files"; }
 		}
 
-		public override void WriteStatistics(ILogger logger)
+		public override void WriteStatistics(ILog logger)
 		{
 			logger.WriteLine("");
 			logger.WriteFixedLine('-');
