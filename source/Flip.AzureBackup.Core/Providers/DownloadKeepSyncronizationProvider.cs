@@ -11,10 +11,10 @@ namespace Flip.AzureBackup.Providers
 {
 	public class DownloadKeepSyncronizationProvider : ISyncronizationProvider
 	{
-		public DownloadKeepSyncronizationProvider(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
+		public DownloadKeepSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._fileSystem = fileAccessor;
+			this._fileSystem = fileSystem;
 			this._storage = storage;
 			this._statistics = new SyncronizationStatistics();
 		}

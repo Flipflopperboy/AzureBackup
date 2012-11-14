@@ -14,10 +14,10 @@ namespace Flip.AzureBackup
 {
 	public class AzureSyncEngine : ISynchronizer
 	{
-		public AzureSyncEngine(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
+		public AzureSyncEngine(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
 			this._logger = logger;
-			this._fileSystem = fileAccessor;
+			this._fileSystem = fileSystem;
 			this._storage = storage;
 		}
 

@@ -9,8 +9,8 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class DownloadDeleteSyncronizationProvider : DownloadKeepSyncronizationProvider
 	{
-		public DownloadDeleteSyncronizationProvider(ILogger logger, IFileSystem fileAccessor, ICloudBlobStorage storage)
-			: base(logger, fileAccessor, storage)
+		public DownloadDeleteSyncronizationProvider(ILogger logger, IFileSystem fileSystem, ICloudBlobStorage storage)
+			: base(logger, fileSystem, storage)
 		{
 		}
 

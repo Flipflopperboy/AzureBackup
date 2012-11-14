@@ -9,10 +9,10 @@ namespace Flip.AzureBackup.Providers
 {
 	public class UploadAnalysisSyncronizationProvider : ISyncronizationProvider
 	{
-		public UploadAnalysisSyncronizationProvider(ILogger logger, IFileSystem fileAccessor)
+		public UploadAnalysisSyncronizationProvider(ILogger logger, IFileSystem fileSystem)
 		{
 			this._logger = logger;
-			this._fileSystem = fileAccessor;
+			this._fileSystem = fileSystem;
 			this._statistics = new SyncronizationStatistics();
 		}
 
