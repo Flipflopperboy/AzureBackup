@@ -16,7 +16,7 @@ namespace Flip.AzureBackup.Console.Configuration
 			builder.RegisterInstance<ILog>(new TextWriterLog(System.Console.Out));
 			builder.RegisterType<MessageBus>().As<IMessageBus>().SingleInstance();
 			builder.RegisterType<FileSystem>().As<IFileSystem>().SingleInstance();
-			builder.RegisterType<AzureSyncEngine>().As<ISyncEngine>().SingleInstance();
+			builder.RegisterType<CloudSyncEngine>().As<ISyncEngine>().SingleInstance();
 			builder.RegisterType<CloudBlobStorage>().As<ICloudBlobStorage>().SingleInstance();
 			return builder.Build();
 		}

@@ -62,7 +62,9 @@
     <Compile Include="Actions\UpdateBlobModifiedDateSyncAction.cs" />
     <Compile Include="Actions\UpdateBlobSyncAction.cs" />
     <Compile Include="Messages\ActionProgressedMessage.cs" />
-    <Compile Include="Messages\SyncStateChangedMessage.cs" />
+    <Compile Include="Messages\SyncStoppedMessage.cs" />
+    <Compile Include="Messages\SyncStartedMessage.cs" />
+    <Compile Include="Messages\SyncPausedMessage.cs" />
     <Compile Include="WindowsAzure\ByteExtensions.cs" />
     <Compile Include="WindowsAzure\NumberExtensions.cs" />
     <Compile Include="Logging\LogExtensions.cs" />
@@ -83,7 +85,7 @@
     <Compile Include="Logging\TextWriterLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncAction.cs" />
-    <Compile Include="WindowsAzure\AzureSyncEngine.cs" />
+    <Compile Include="WindowsAzure\CloudSyncEngine.cs" />
     <Compile Include="SyncSettings.cs" />
     <Compile Include="WindowsAzure\ICloudBlobStorage.cs" />
   </ItemGroup>

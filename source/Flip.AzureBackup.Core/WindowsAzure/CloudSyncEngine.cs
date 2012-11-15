@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.Messages;
 using Flip.AzureBackup.Providers;
 using Flip.Common.Messages;
+using Flip.Common.Threading;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
@@ -14,23 +17,17 @@ using Microsoft.WindowsAzure.StorageClient;
 
 namespace Flip.AzureBackup.WindowsAzure
 {
-	public class AzureSyncEngine : ISyncEngine
+	public class CloudSyncEngine : ISyncEngine
 	{
-		public AzureSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage, IMessageBus messageBus)
+		public CloudSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage, IMessageBus messageBus)
 		{
 			this._log = log;
 			this._fileSystem = fileSystem;
 			this._blobStorage = storage;
 			this._messageBus = messageBus;
-
-			messageBus.Subscribe<SyncStateChangedMessage>(message => _running = message.Running);
 		}
 
 
-
-		public void RegisterPauseHandler()
-		{
-		}
 
 		public void Sync(SyncSettings settings)
 		{
@@ -54,11 +51,16 @@ namespace Flip.AzureBackup.WindowsAzure
 
 				Queue<ISyncAction> actions = GetActions(settings.DirectoryPath, blobContainer, provider);
 
-				while (actions.Count > 0)
-				{
-					ISyncAction action = actions.Dequeue();
-					action.Invoke();
-				}
+				using (new MessageBasedTaskRunner<SyncStartedMessage, SyncPausedMessage, SyncStoppedMessage>(
+					() => actions.Count > 0,
+					() =>
+					{
+						ISyncAction action = actions.Dequeue();
+						action.Invoke();
+					},
+					_messageBus)
+					.Start()
+					.Wait()) { }
 
 				this._log.WriteLine("Done...");
 			}
@@ -147,7 +149,6 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		private bool _running = true;
 		private readonly ILog _log;
 		private readonly IFileSystem _fileSystem;
 		private readonly ICloudBlobStorage _blobStorage;

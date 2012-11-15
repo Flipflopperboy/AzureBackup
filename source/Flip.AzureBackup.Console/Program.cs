@@ -26,12 +26,35 @@ namespace Flip.AzureBackup.Console
 				bool running = true;
 				Task.Factory.StartNew(() =>
 					{
-						if (System.Console.KeyAvailable)
+						while (true)
 						{
-							running = !running;
-							messageBus.Publish(new SyncStateChangedMessage(running));
+							if (System.Console.KeyAvailable)
+							{
+								ConsoleKey key = System.Console.ReadKey().Key;
+								if (key == ConsoleKey.P)
+								{
+									running = !running;
+									if (running)
+									{
+										messageBus.Publish(new SyncStartedMessage());
+										System.Console.WriteLine("");
+									}
+									else
+									{
+										messageBus.Publish(new SyncPausedMessage());
+										System.Console.WriteLine("");
+										System.Console.WriteLine("PAUSED");
+									}
+								}
+								else if (key == ConsoleKey.Q)
+								{
+									messageBus.Publish(new SyncStoppedMessage());
+									System.Console.WriteLine("");
+									System.Console.WriteLine("STOPPED");
+								}
+							}
+							Thread.Sleep(50);
 						}
-						Thread.Sleep(100);
 					});
 
 				messageBus.Subscribe<ActionProgressedMessage>(OnActionProgressed);
@@ -139,7 +162,7 @@ namespace Flip.AzureBackup.Console
 		private static void ShowTryMessage()
 		{
 			System.Console.WriteLine("");
-			System.Console.WriteLine("Try AzureBackup --help' for more information.");
+			System.Console.WriteLine("Try --help' for more information.");
 		}
 
 		private static void ShowHelp(OptionSet options)
