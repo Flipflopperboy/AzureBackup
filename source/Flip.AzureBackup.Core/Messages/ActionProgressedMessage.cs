@@ -1,13 +1,19 @@
-﻿namespace Flip.AzureBackup.Actions
+﻿using Flip.Common.Messages;
+
+
+
+namespace Flip.AzureBackup.Messages
 {
-	public sealed class ActionProgressEventArgs
+	public sealed class ActionProgressedMessage : MessageBase
 	{
-		public ActionProgressEventArgs(string fileFullPath, string message, decimal fraction)
+		public ActionProgressedMessage(string fileFullPath, string message, decimal fraction)
 		{
 			this.FileFullPath = fileFullPath;
 			this.Message = message;
 			this.Fraction = fraction;
 		}
+
+
 
 		public string FileFullPath { get; private set; }
 		public string Message { get; private set; }

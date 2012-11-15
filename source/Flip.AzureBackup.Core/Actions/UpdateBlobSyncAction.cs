@@ -1,5 +1,6 @@
 ﻿using Flip.AzureBackup.IO;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -8,7 +9,8 @@ namespace Flip.AzureBackup.Actions
 {
 	public sealed class UpdateBlobSyncAction : SyncAction
 	{
-		public UpdateBlobSyncAction(ICloudBlobStorage blobStorage, FileInformation fileInfo, CloudBlob blob)
+		public UpdateBlobSyncAction(IMessageBus messageBus, ICloudBlobStorage blobStorage, FileInformation fileInfo, CloudBlob blob)
+			: base(messageBus)
 		{
 			_blobStorage = blobStorage;
 			_fileInfo = fileInfo;

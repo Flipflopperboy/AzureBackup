@@ -1,4 +1,5 @@
 ﻿using Flip.AzureBackup.IO;
+using Flip.Common.Messages;
 
 
 
@@ -6,7 +7,8 @@ namespace Flip.AzureBackup.Actions
 {
 	public sealed class DeleteFileSyncAction : SyncAction
 	{
-		public DeleteFileSyncAction(IFileSystem fileSystem, FileInformation fileInfo)
+		public DeleteFileSyncAction(IMessageBus messageBus, IFileSystem fileSystem, FileInformation fileInfo)
+			: base(messageBus)
 		{
 			_fileSystem = fileSystem;
 			_fileInfo = fileInfo;

@@ -2,6 +2,7 @@
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -10,8 +11,9 @@ namespace Flip.AzureBackup.Providers
 {
 	public class DownloadKeepSyncronizationProvider : ISyncronizationProvider
 	{
-		public DownloadKeepSyncronizationProvider(IFileSystem fileSystem, ICloudBlobStorage storage)
+		public DownloadKeepSyncronizationProvider(IMessageBus messageBus, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
+			this._messageBus = messageBus;
 			this._fileSystem = fileSystem;
 			this._blobStorage = storage;
 			this._statistics = new SyncronizationStatistics();
@@ -44,13 +46,13 @@ namespace Flip.AzureBackup.Providers
 		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedCount++;
-			return new UpdateFileSyncAction(_fileSystem, fileInfo, blob);
+			return new UpdateFileSyncAction(_messageBus, _fileSystem, fileInfo, blob);
 		}
 
 		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedModifiedDateCount++;
-			return new UpdateFileModifiedDateSyncAction(_fileSystem, fileInfo, blob);
+			return new UpdateFileModifiedDateSyncAction(_messageBus, _fileSystem, fileInfo, blob);
 		}
 
 		public virtual ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
@@ -63,11 +65,12 @@ namespace Flip.AzureBackup.Providers
 			this._statistics.FileNotExistCount++;
 			string relativePath = blob.GetRelativeFilePath();
 			string fullPath = this._fileSystem.Combine(basePath, relativePath);
-			return new CreateFileSyncAction(_fileSystem, _blobStorage, fullPath, blob);
+			return new CreateFileSyncAction(_messageBus, _fileSystem, _blobStorage, fullPath, blob);
 		}
 
 
 
+		protected readonly IMessageBus _messageBus;
 		protected readonly IFileSystem _fileSystem;
 		protected readonly ICloudBlobStorage _blobStorage;
 		protected SyncronizationStatistics _statistics;

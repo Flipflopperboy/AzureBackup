@@ -3,6 +3,7 @@ using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -11,8 +12,9 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class UploadSyncronizationProvider : ISyncronizationProvider
 	{
-		public UploadSyncronizationProvider(IFileSystem fileSystem, ICloudBlobStorage storage)
+		public UploadSyncronizationProvider(IMessageBus messageBus, IFileSystem fileSystem, ICloudBlobStorage storage)
 		{
+			this._messageBus = messageBus;
 			this._blobStorage = storage;
 			this._fileSystem = fileSystem;
 			this._statistics = new SyncronizationStatistics();
@@ -49,19 +51,19 @@ namespace Flip.AzureBackup.Providers
 		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedCount++;
-			return new UpdateBlobSyncAction(_blobStorage, fileInfo, blob);
+			return new UpdateBlobSyncAction(_messageBus, _blobStorage, fileInfo, blob);
 		}
 
 		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedModifiedDateCount++;
-			return new UpdateBlobModifiedDateSyncAction(fileInfo, blob);
+			return new UpdateBlobModifiedDateSyncAction(_messageBus, fileInfo, blob);
 		}
 
 		public ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
 			this._statistics.BlobNotExistCount++;
-			return new CreateBlobSyncAction(_blobStorage, blobContainer, fileInfo);
+			return new CreateBlobSyncAction(_messageBus, _blobStorage, blobContainer, fileInfo);
 		}
 
 		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
@@ -69,11 +71,12 @@ namespace Flip.AzureBackup.Providers
 			this._statistics.FileNotExistCount++;
 			string relativePath = blob.GetRelativeFilePath();
 			string fileFullPath = this._fileSystem.Combine(basePath, relativePath);
-			return new DeleteBlobSyncAction(fileFullPath, blob);
+			return new DeleteBlobSyncAction(_messageBus, fileFullPath, blob);
 		}
 
 
 
+		private readonly IMessageBus _messageBus;
 		private readonly IFileSystem _fileSystem;
 		private readonly SyncronizationStatistics _statistics;
 		private readonly ICloudBlobStorage _blobStorage;

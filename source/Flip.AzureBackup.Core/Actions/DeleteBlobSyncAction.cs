@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.StorageClient;
+﻿using Flip.Common.Messages;
+using Microsoft.WindowsAzure.StorageClient;
 
 
 
@@ -6,7 +7,8 @@ namespace Flip.AzureBackup.Actions
 {
 	public sealed class DeleteBlobSyncAction : SyncAction
 	{
-		public DeleteBlobSyncAction(string fileFullPath, CloudBlob blob)
+		public DeleteBlobSyncAction(IMessageBus messageBus, string fileFullPath, CloudBlob blob)
+			: base(messageBus)
 		{
 			_fileFullPath = fileFullPath;
 			_blob = blob;

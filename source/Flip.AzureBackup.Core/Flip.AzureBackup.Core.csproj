@@ -50,7 +50,6 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
-    <Compile Include="Actions\ActionProgressEventArgs.cs" />
     <Compile Include="Actions\EmptySyncAction.cs" />
     <Compile Include="Actions\SyncAction.cs" />
     <Compile Include="Actions\UpdateFileSyncAction.cs" />
@@ -62,6 +61,8 @@
     <Compile Include="Actions\ISyncAction.cs" />
     <Compile Include="Actions\UpdateBlobModifiedDateSyncAction.cs" />
     <Compile Include="Actions\UpdateBlobSyncAction.cs" />
+    <Compile Include="Messages\ActionProgressedMessage.cs" />
+    <Compile Include="Messages\SyncStateChangedMessage.cs" />
     <Compile Include="WindowsAzure\ByteExtensions.cs" />
     <Compile Include="WindowsAzure\NumberExtensions.cs" />
     <Compile Include="Logging\LogExtensions.cs" />
@@ -88,6 +89,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\externals\Flip.Common\Source\Flip.Common.Core\Flip.Common.Core.csproj">
+      <Project>{52ab4da0-6ddc-41d2-887d-c1a7caeb8cdd}</Project>
+      <Name>Flip.Common.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

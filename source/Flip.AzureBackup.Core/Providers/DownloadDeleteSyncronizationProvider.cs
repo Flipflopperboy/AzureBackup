@@ -2,6 +2,7 @@
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -10,8 +11,8 @@ namespace Flip.AzureBackup.Providers
 {
 	public sealed class DownloadDeleteSyncronizationProvider : DownloadKeepSyncronizationProvider
 	{
-		public DownloadDeleteSyncronizationProvider(IFileSystem fileSystem, ICloudBlobStorage storage)
-			: base(fileSystem, storage)
+		public DownloadDeleteSyncronizationProvider(IMessageBus messageBus, IFileSystem fileSystem, ICloudBlobStorage storage)
+			: base(messageBus, fileSystem, storage)
 		{
 		}
 
@@ -37,7 +38,7 @@ namespace Flip.AzureBackup.Providers
 		public override ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
 			this._statistics.BlobNotExistCount++;
-			return new DeleteFileSyncAction(_fileSystem, fileInfo);
+			return new DeleteFileSyncAction(_messageBus, _fileSystem, fileInfo);
 		}
 	}
 }

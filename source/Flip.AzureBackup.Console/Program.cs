@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Autofac;
 using Flip.AzureBackup.Console.Configuration;
+using Flip.AzureBackup.Messages;
 using Flip.Common;
+using Flip.Common.Messages;
 using NDesk.Options;
 
 
@@ -17,6 +21,21 @@ namespace Flip.AzureBackup.Console
 			{
 				IContainer container = ContainerConfiguration.CreateContainer();
 				var synchronizer = container.Resolve<ISyncEngine>();
+				var messageBus = container.Resolve<IMessageBus>();
+
+				bool running = true;
+				Task.Factory.StartNew(() =>
+					{
+						if (System.Console.KeyAvailable)
+						{
+							running = !running;
+							messageBus.Publish(new SyncStateChangedMessage(running));
+						}
+						Thread.Sleep(100);
+					});
+
+				messageBus.Subscribe<ActionProgressedMessage>(OnActionProgressed);
+
 				synchronizer.Sync(settings);
 			}
 			System.Console.ReadKey();
@@ -96,6 +115,25 @@ namespace Flip.AzureBackup.Console
 			settings = parsedSettings;
 
 			return true;
+		}
+
+		private static void OnActionProgressed(ActionProgressedMessage message)
+		{
+			if (message.Fraction == 0)
+			{
+				System.Console.WriteLine(message.Message);
+				System.Console.WriteLine(message.FileFullPath);
+				System.Console.WriteLine(message.Fraction.ToString("P0"));
+			}
+			else if (message.Fraction == 1)
+			{
+				System.Console.WriteLine(message.Fraction.ToString("P0"));
+				System.Console.WriteLine("");
+			}
+			else
+			{
+				System.Console.WriteLine(message.Fraction.ToString("P0"));
+			}
 		}
 
 		private static void ShowTryMessage()

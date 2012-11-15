@@ -1,5 +1,6 @@
 ﻿using Flip.AzureBackup.IO;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -8,7 +9,8 @@ namespace Flip.AzureBackup.Actions
 {
 	public sealed class UpdateBlobModifiedDateSyncAction : SyncAction
 	{
-		public UpdateBlobModifiedDateSyncAction(FileInformation fileInfo, CloudBlob blob)
+		public UpdateBlobModifiedDateSyncAction(IMessageBus messageBus, FileInformation fileInfo, CloudBlob blob)
+			: base(messageBus)
 		{
 			_fileInfo = fileInfo;
 			_blob = blob;

@@ -4,8 +4,9 @@ using System.Linq;
 using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.Messages;
 using Flip.AzureBackup.Providers;
-using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.StorageClient;
 
@@ -15,14 +16,21 @@ namespace Flip.AzureBackup.WindowsAzure
 {
 	public class AzureSyncEngine : ISyncEngine
 	{
-		public AzureSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage)
+		public AzureSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage, IMessageBus messageBus)
 		{
 			this._log = log;
 			this._fileSystem = fileSystem;
 			this._blobStorage = storage;
+			this._messageBus = messageBus;
+
+			messageBus.Subscribe<SyncStateChangedMessage>(message => _running = message.Running);
 		}
 
 
+
+		public void RegisterPauseHandler()
+		{
+		}
 
 		public void Sync(SyncSettings settings)
 		{
@@ -49,7 +57,6 @@ namespace Flip.AzureBackup.WindowsAzure
 				while (actions.Count > 0)
 				{
 					ISyncAction action = actions.Dequeue();
-					action.Progress += OnActionProgress;
 					action.Invoke();
 				}
 
@@ -128,40 +135,23 @@ namespace Flip.AzureBackup.WindowsAzure
 			switch (action)
 			{
 				case SyncAction.Download:
-					return new DownloadDeleteSyncronizationProvider(this._fileSystem, this._blobStorage);
+					return new DownloadDeleteSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
 				case SyncAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(this._fileSystem, this._blobStorage);
+					return new DownloadKeepSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
 				case SyncAction.Upload:
-					return new UploadSyncronizationProvider(this._fileSystem, this._blobStorage);
+					return new UploadSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
 				default:
 					return new UploadAnalysisSyncronizationProvider(this._fileSystem);
 			}
 		}
 
-		private void OnActionProgress(object sender, ActionProgressEventArgs e)
-		{
-			if (e.Fraction == 0)
-			{
-				this._log.WriteLine(e.Message);
-				this._log.WriteLine(e.FileFullPath);
-				this._log.WriteLine(e.Fraction.ToString("P0"));
-			}
-			else if (e.Fraction == 1)
-			{
-				this._log.WriteLine(e.Fraction.ToString("P0"));
-				this._log.WriteLine("");
-			}
-			else
-			{
-				this._log.WriteLine(e.Fraction.ToString("P0"));
-			}
-		}
 
 
-
+		private bool _running = true;
 		private readonly ILog _log;
 		private readonly IFileSystem _fileSystem;
 		private readonly ICloudBlobStorage _blobStorage;
+		private readonly IMessageBus _messageBus;
 		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
 		{
 			UseFlatBlobListing = true,

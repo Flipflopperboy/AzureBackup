@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Microsoft.WindowsAzure;

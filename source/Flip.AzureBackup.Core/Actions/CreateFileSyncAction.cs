@@ -1,5 +1,6 @@
 ﻿using Flip.AzureBackup.IO;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 using Microsoft.WindowsAzure.StorageClient;
 
 
@@ -8,7 +9,8 @@ namespace Flip.AzureBackup.Actions
 {
 	public sealed class CreateFileSyncAction : SyncAction
 	{
-		public CreateFileSyncAction(IFileSystem fileSystem, ICloudBlobStorage blobStorage, string fileFullPath, CloudBlob blob)
+		public CreateFileSyncAction(IMessageBus messageBus, IFileSystem fileSystem, ICloudBlobStorage blobStorage, string fileFullPath, CloudBlob blob)
+			: base(messageBus)
 		{
 			_fileSystem = fileSystem;
 			_blobStorage = blobStorage;

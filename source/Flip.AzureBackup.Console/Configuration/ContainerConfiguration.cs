@@ -2,6 +2,7 @@
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
 using Flip.AzureBackup.WindowsAzure;
+using Flip.Common.Messages;
 
 
 
@@ -13,6 +14,7 @@ namespace Flip.AzureBackup.Console.Configuration
 		{
 			var builder = new ContainerBuilder();
 			builder.RegisterInstance<ILog>(new TextWriterLog(System.Console.Out));
+			builder.RegisterType<MessageBus>().As<IMessageBus>().SingleInstance();
 			builder.RegisterType<FileSystem>().As<IFileSystem>().SingleInstance();
 			builder.RegisterType<AzureSyncEngine>().As<ISyncEngine>().SingleInstance();
 			builder.RegisterType<CloudBlobStorage>().As<ICloudBlobStorage>().SingleInstance();
