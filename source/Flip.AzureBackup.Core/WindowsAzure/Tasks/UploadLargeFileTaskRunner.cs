@@ -45,10 +45,21 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			}
 			_blockBlob.SetFileLastModifiedUtc(_fileInfo.LastWriteTimeUtc, false);
 
-			_stream = _fileSystem.GetReadFileStream(_fileInfo.FullPath);
-			_reader = new BinaryReader(_stream);
-
 			_messageBus.Publish(new FileProgressedMessage(_fileInfo.FullPath, 0));
+		}
+
+		protected override void OnStarting()
+		{
+			base.OnStarting();
+			_stream = _fileSystem.OpenReadFileStream(_fileInfo.FullPath);
+			_reader = new BinaryReader(_stream);
+			_stream.Seek(_bytesSent, SeekOrigin.Begin);
+		}
+
+		protected override void OnPaused()
+		{
+			base.OnPaused();
+			DisposeReaderAndStream();
 		}
 
 		protected override bool LoopCondition()
@@ -72,7 +83,6 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			}
 			_bytesSent += _currentBlockSize;
 			_loopCounter++;
-
 			_messageBus.Publish(new FileProgressedMessage(_fileInfo.FullPath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
 		}
 
@@ -81,13 +91,20 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			base.Dispose(disposing);
 			if (disposing)
 			{
-				try { _reader.Dispose(); }
-				catch { }
-				try { _stream.Dispose(); }
-				catch { }
+				DisposeReaderAndStream();
 				try { _blockBlob.PutBlockList(_blockIds); }
 				catch { }
 			}
+		}
+
+
+
+		private void DisposeReaderAndStream()
+		{
+			try { _reader.Dispose(); }
+			catch { }
+			try { _stream.Dispose(); }
+			catch { }
 		}
 
 

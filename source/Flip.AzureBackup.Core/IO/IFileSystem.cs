@@ -11,8 +11,8 @@ namespace Flip.AzureBackup.IO
 		void EnsureFileDirectory(string fullPath);
 		bool DirectoryExists(string directoryPath);
 		void CreateDirectoryIfNotExists(string path);
-		Stream GetReadFileStream(string path);
-		Stream GetWriteFileStream(string path);
+		Stream OpenReadFileStream(string path);
+		Stream OpenOrCreateWriteFileStream(string path);
 
 		string GetMD5HashForFile(string path);
 		void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc);

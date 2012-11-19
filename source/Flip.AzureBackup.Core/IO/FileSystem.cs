@@ -19,14 +19,14 @@ namespace Flip.AzureBackup.IO
 				.Select(file => new FileInformation(GetFullPath(file), GetRelativePath(file, directoryPath), file.LastWriteTimeUtc, file.Length));
 		}
 
-		public Stream GetReadFileStream(string path)
+		public Stream OpenReadFileStream(string path)
 		{
 			return new FileStream(path, FileMode.Open, FileAccess.Read);
 		}
 		
-		public Stream GetWriteFileStream(string path)
+		public Stream OpenOrCreateWriteFileStream(string path)
 		{
-			return new FileStream(path, FileMode.Create, FileAccess.Write);
+			return new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
 		}
 
 		public bool DirectoryExists(string directoryPath)

@@ -31,15 +31,24 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 
 			_messageBus.Publish(new FileProgressedMessage(_fullFilePath, 0));
 
-			_loopCounter = 0;
-			_rangeStart = 0;
-			_rangeEnd = 0;
 			_blobLength = _blob.Properties.Length;
 			_numberOfParts = (int)Math.Ceiling((decimal)_blobLength / (decimal)CloudBlobConstants.MaxBlockSize);
 			_rangeFraction = 1 / (decimal)_numberOfParts;
 
-			_fileSystem.EnsureFileDirectory(_fullFilePath);
-			_fileStream = this._fileSystem.GetWriteFileStream(_fullFilePath);
+			_fileSystem.EnsureFileDirectory(_fullFilePath);			
+		}
+
+		protected override void OnStarting()
+		{
+			base.OnStarting();
+			_fileStream = this._fileSystem.OpenOrCreateWriteFileStream(_fullFilePath);
+			_fileStream.Seek(0, SeekOrigin.End);
+		}
+
+		protected override void OnPaused()
+		{
+			base.OnPaused();
+			DisposeFileStream();
 		}
 
 		protected override bool LoopCondition()
@@ -68,6 +77,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			}
 			_loopCounter++;
 			_messageBus.Publish(new FileProgressedMessage(_fullFilePath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
+			System.Threading.Thread.Sleep(700);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -75,11 +85,18 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			base.Dispose(disposing);
 			if (disposing)
 			{
-				try { _fileStream.Dispose(); }
-				catch { }
+				DisposeFileStream();
 				try { _fileSystem.SetLastWriteTimeUtc(_fullFilePath, _blob.GetFileLastModifiedUtc()); }
 				catch { }
 			}
+		}
+
+
+
+		private void DisposeFileStream()
+		{
+			try { _fileStream.Dispose(); }
+			catch { }
 		}
 
 
