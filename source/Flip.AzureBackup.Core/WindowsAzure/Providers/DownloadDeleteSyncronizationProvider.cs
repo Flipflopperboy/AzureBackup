@@ -1,18 +1,19 @@
-﻿using Flip.AzureBackup.Actions;
-using Flip.AzureBackup.IO;
+﻿using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
-using Flip.AzureBackup.WindowsAzure;
+using Flip.AzureBackup.Messages;
+using Flip.AzureBackup.WindowsAzure.Tasks;
 using Flip.Common.Messages;
+using Flip.Common.Threading;
 using Microsoft.WindowsAzure.StorageClient;
 
 
 
-namespace Flip.AzureBackup.Providers
+namespace Flip.AzureBackup.WindowsAzure.Providers
 {
 	public sealed class DownloadDeleteSyncronizationProvider : DownloadKeepSyncronizationProvider
 	{
-		public DownloadDeleteSyncronizationProvider(IMessageBus messageBus, IFileSystem fileSystem, ICloudBlobStorage storage)
-			: base(messageBus, fileSystem, storage)
+		public DownloadDeleteSyncronizationProvider(IMessageBus messageBus, IFileSystem fileSystem)
+			: base(messageBus, fileSystem)
 		{
 		}
 
@@ -35,10 +36,15 @@ namespace Flip.AzureBackup.Providers
 			log.WriteLine("");
 		}
 
-		public override ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
+		public override TaskRunner CreateBlobNotExistsTaskRunner(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
 			this._statistics.BlobNotExistCount++;
-			return new DeleteFileSyncAction(_messageBus, _fileSystem, fileInfo);
+			return new SingleActionTaskRunner(() =>
+			{
+				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+				_fileSystem.DeleteFile(fileInfo.FullPath);
+				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+			});
 		}
 	}
 }

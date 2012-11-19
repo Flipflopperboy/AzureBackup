@@ -6,17 +6,15 @@ namespace Flip.AzureBackup.Messages
 {
 	public sealed class ActionProgressedMessage : MessageBase
 	{
-		public ActionProgressedMessage(string fileFullPath, string message, decimal fraction)
+		public ActionProgressedMessage(string fullFilePath, decimal fraction)
 		{
-			this.FileFullPath = fileFullPath;
-			this.Message = message;
+			this.FullFilePath = fullFilePath;
 			this.Fraction = fraction;
 		}
 
 
 
-		public string FileFullPath { get; private set; }
-		public string Message { get; private set; }
+		public string FullFilePath { get; private set; }
 		public decimal Fraction { get; private set; }
 	}
 }

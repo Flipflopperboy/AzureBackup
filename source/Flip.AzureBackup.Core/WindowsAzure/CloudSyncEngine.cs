@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
-using Flip.AzureBackup.Messages;
-using Flip.AzureBackup.Providers;
+using Flip.AzureBackup.WindowsAzure.Providers;
+using Flip.AzureBackup.WindowsAzure.Tasks;
 using Flip.Common.Messages;
 using Flip.Common.Threading;
 using Microsoft.WindowsAzure;
@@ -19,11 +15,10 @@ namespace Flip.AzureBackup.WindowsAzure
 {
 	public class CloudSyncEngine : ISyncEngine
 	{
-		public CloudSyncEngine(ILog log, IFileSystem fileSystem, ICloudBlobStorage storage, IMessageBus messageBus)
+		public CloudSyncEngine(ILog log, IFileSystem fileSystem, IMessageBus messageBus)
 		{
 			this._log = log;
 			this._fileSystem = fileSystem;
-			this._blobStorage = storage;
 			this._messageBus = messageBus;
 		}
 
@@ -49,18 +44,22 @@ namespace Flip.AzureBackup.WindowsAzure
 				this._log.WriteLine(provider.Description);
 				this._log.WriteLine("");
 
-				Queue<ISyncAction> actions = GetActions(settings.DirectoryPath, blobContainer, provider);
+				using (var worker = new CreateWorkTaskRunner(_messageBus, _fileSystem, provider, settings.DirectoryPath, blobContainer))
+				{
+					worker.Start()
+						  .Wait();
 
-				using (new MessageBasedTaskRunner<SyncStartedMessage, SyncPausedMessage, SyncStoppedMessage>(
-					() => actions.Count > 0,
-					() =>
+					Queue<TaskRunner> taskRunners = worker.GetSubTaskRunnerQueue();
+					while (taskRunners.Count > 0)
 					{
-						ISyncAction action = actions.Dequeue();
-						action.Invoke();
-					},
-					_messageBus)
-					.Start()
-					.Wait()) { }
+						using (var taskRunner = taskRunners.Dequeue())
+						{
+							taskRunner
+								.Start()
+								.Wait();
+						}
+					}
+				}
 
 				this._log.WriteLine("Done...");
 			}
@@ -72,64 +71,7 @@ namespace Flip.AzureBackup.WindowsAzure
 
 
 
-		private Queue<ISyncAction> GetActions(
-			string directoryPath,
-			CloudBlobContainer blobContainer,
-			ISyncronizationProvider provider)
-		{
-			Queue<string> queue = new Queue<string>();
 
-			List<FileInformation> files = this._fileSystem
-				.GetFileInformationIncludingSubDirectories(directoryPath).ToList();
-
-			Dictionary<Uri, CloudBlob> blobs = blobContainer.ListBlobs(blobRequestOptions)
-				.Cast<CloudBlob>()
-				.ToDictionary(blob => blob.Uri, blob => blob);
-
-			Queue<ISyncAction> actions = new Queue<ISyncAction>();
-
-			foreach (var fileInfo in files)
-			{
-				var blobUri = blobContainer.GetBlobUri(fileInfo.BlobName);
-				if (blobs.ContainsKey(blobUri))
-				{
-					CloudBlob blob = blobs[blobUri];
-					if (fileInfo.LastWriteTimeUtc != blob.GetFileLastModifiedUtc())
-					{
-						if (blob.Properties.BlobType == BlobType.PageBlob) //Block blobs don't have ContentMD5 set
-						{
-							string contentMD5 = this._fileSystem.GetMD5HashForFile(fileInfo.FullPath);
-							if (contentMD5 == blob.Properties.ContentMD5)
-							{
-								actions.Enqueue(provider.CreateUpdateModifiedDateSyncAction(blob, fileInfo));
-							}
-							else
-							{
-								actions.Enqueue(provider.CreateUpdateSyncAction(blob, fileInfo));
-							}
-						}
-						else
-						{
-							actions.Enqueue(provider.CreateUpdateSyncAction(blob, fileInfo));
-						}
-					}
-					blobs.Remove(blobUri);
-				}
-				else
-				{
-					actions.Enqueue(provider.CreateBlobNotExistsSyncAction(blobContainer, fileInfo));
-				}
-			}
-
-			foreach (var item in blobs)
-			{
-				actions.Enqueue(provider.CreateFileNotExistsSyncAction(item.Value, directoryPath));
-			}
-
-			provider.WriteStatistics(_log);
-
-			return actions;
-		}
 
 		private ISyncronizationProvider GetProvider(SyncAction action)
 		{
@@ -137,11 +79,11 @@ namespace Flip.AzureBackup.WindowsAzure
 			switch (action)
 			{
 				case SyncAction.Download:
-					return new DownloadDeleteSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
+					return new DownloadDeleteSyncronizationProvider(_messageBus, _fileSystem);
 				case SyncAction.DownloadKeep:
-					return new DownloadKeepSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
+					return new DownloadKeepSyncronizationProvider(_messageBus, _fileSystem);
 				case SyncAction.Upload:
-					return new UploadSyncronizationProvider(_messageBus, _fileSystem, _blobStorage);
+					return new UploadSyncronizationProvider(_messageBus, _fileSystem);
 				default:
 					return new UploadAnalysisSyncronizationProvider(this._fileSystem);
 			}
@@ -151,12 +93,7 @@ namespace Flip.AzureBackup.WindowsAzure
 
 		private readonly ILog _log;
 		private readonly IFileSystem _fileSystem;
-		private readonly ICloudBlobStorage _blobStorage;
 		private readonly IMessageBus _messageBus;
-		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
-		{
-			UseFlatBlobListing = true,
-			BlobListingDetails = BlobListingDetails.Metadata
-		};
+
 	}
 }

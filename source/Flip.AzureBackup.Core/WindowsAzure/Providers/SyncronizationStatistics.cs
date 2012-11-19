@@ -1,4 +1,4 @@
-﻿namespace Flip.AzureBackup.Providers
+﻿namespace Flip.AzureBackup.WindowsAzure.Providers
 {
 	public sealed class SyncronizationStatistics
 	{

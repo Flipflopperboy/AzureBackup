@@ -144,8 +144,7 @@ namespace Flip.AzureBackup.Console
 		{
 			if (message.Fraction == 0)
 			{
-				System.Console.WriteLine(message.Message);
-				System.Console.WriteLine(message.FileFullPath);
+				System.Console.WriteLine(message.FullFilePath);
 				System.Console.WriteLine(message.Fraction.ToString("P0"));
 			}
 			else if (message.Fraction == 1)

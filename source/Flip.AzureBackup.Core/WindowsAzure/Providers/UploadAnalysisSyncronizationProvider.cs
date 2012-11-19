@@ -1,12 +1,13 @@
 ﻿using System;
-using Flip.AzureBackup.Actions;
 using Flip.AzureBackup.IO;
 using Flip.AzureBackup.Logging;
+using Flip.AzureBackup.WindowsAzure.Tasks;
+using Flip.Common.Threading;
 using Microsoft.WindowsAzure.StorageClient;
 
 
 
-namespace Flip.AzureBackup.Providers
+namespace Flip.AzureBackup.WindowsAzure.Providers
 {
 	public class UploadAnalysisSyncronizationProvider : ISyncronizationProvider
 	{
@@ -44,28 +45,28 @@ namespace Flip.AzureBackup.Providers
 			return true;
 		}
 
-		public ISyncAction CreateUpdateSyncAction(CloudBlob blob, FileInformation fileInfo)
+		public TaskRunner CreateUpdateTaskRunner(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedCount++;
-			return new EmptySyncAction();
+			return new EmptyTaskRunner();
 		}
 
-		public ISyncAction CreateUpdateModifiedDateSyncAction(CloudBlob blob, FileInformation fileInfo)
+		public TaskRunner CreateUpdateModifiedDateTaskRunner(CloudBlob blob, FileInformation fileInfo)
 		{
 			this._statistics.UpdatedModifiedDateCount++;
-			return new EmptySyncAction();
+			return new EmptyTaskRunner();
 		}
 
-		public ISyncAction CreateBlobNotExistsSyncAction(CloudBlobContainer blobContainer, FileInformation fileInfo)
+		public TaskRunner CreateBlobNotExistsTaskRunner(CloudBlobContainer blobContainer, FileInformation fileInfo)
 		{
 			this._statistics.BlobNotExistCount++;
-			return new EmptySyncAction();
+			return new EmptyTaskRunner();
 		}
 
-		public ISyncAction CreateFileNotExistsSyncAction(CloudBlob blob, string basePath)
+		public TaskRunner CreateFileNotExistsTaskRunner(CloudBlob blob, string basePath)
 		{
 			this._statistics.FileNotExistCount++;
-			return new EmptySyncAction();
+			return new EmptyTaskRunner();
 		}
 
 
