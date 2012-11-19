@@ -163,11 +163,19 @@ namespace Flip.AzureBackup.Console
 		private static void OnFileAnalyzed(FileAnalyzedMessage message)
 		{
 			System.Console.WriteLine(string.Format("Analyzed file {0} of {1}: '{2}'", message.Number, message.Total, message.FullFilePath));
+			if (message.Number == message.Total)
+			{
+				System.Console.WriteLine("");
+			}
 		}
 
 		private static void OnBlobAnalyzed(BlobAnalyzedMessage message)
 		{
 			System.Console.WriteLine(string.Format("Analyzed blob {0} of {1}: '{2}'", message.Number, message.Total, message.FileRelativePath));
+			if (message.Number == message.Total)
+			{
+				System.Console.WriteLine("");
+			}
 		}
 
 		private static void ShowTryMessage()
@@ -178,7 +186,7 @@ namespace Flip.AzureBackup.Console
 
 		private static void ShowHelp(OptionSet options)
 		{
-			System.Console.WriteLine("Usage: AzureBackup [OPTIONS]");
+			System.Console.WriteLine("Usage: " + typeof(Program).Assembly.GetName().Name + " [OPTIONS]");
 			System.Console.WriteLine();
 			System.Console.WriteLine("Options:");
 			options.WriteOptionDescriptions(System.Console.Out);

@@ -26,9 +26,9 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 
 
 
-		public Queue<TaskRunner> GetSubTaskRunnerQueue()
+		public QueueTaskRunner GetQueueTaskRunner()
 		{
-			return _tasks;
+			return new QueueTaskRunner(_messageBus, _tasks);
 		}
 
 

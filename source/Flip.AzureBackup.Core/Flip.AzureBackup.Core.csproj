@@ -81,6 +81,7 @@
     <Compile Include="WindowsAzure\Tasks\CreateWorkTaskRunner.cs" />
     <Compile Include="WindowsAzure\Tasks\DownloadLargeFileTaskRunner.cs" />
     <Compile Include="WindowsAzure\Tasks\EmptyTaskRunner.cs" />
+    <Compile Include="WindowsAzure\Tasks\QueueTaskRunner.cs" />
     <Compile Include="WindowsAzure\Tasks\UploadLargeFileTaskRunner.cs" />
     <Compile Include="WindowsAzure\Tasks\SingleActionTaskRunner.cs" />
   </ItemGroup>
