@@ -29,7 +29,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 		{
 			base.OnFirstStarting();
 
-			_messageBus.Publish(new ActionProgressedMessage(_fullFilePath, 0));
+			_messageBus.Publish(new FileProgressedMessage(_fullFilePath, 0));
 
 			_loopCounter = 0;
 			_rangeStart = 0;
@@ -39,7 +39,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			_rangeFraction = 1 / (decimal)_numberOfParts;
 
 			_fileSystem.EnsureFileDirectory(_fullFilePath);
-			_fileStream = this._fileSystem.GetWriteFileStream(_fullFilePath);			
+			_fileStream = this._fileSystem.GetWriteFileStream(_fullFilePath);
 		}
 
 		protected override bool LoopCondition()
@@ -67,7 +67,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 				}
 			}
 			_loopCounter++;
-			_messageBus.Publish(new ActionProgressedMessage(_fullFilePath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
+			_messageBus.Publish(new FileProgressedMessage(_fullFilePath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
 		}
 
 		protected override void Dispose(bool disposing)

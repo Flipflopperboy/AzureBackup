@@ -50,10 +50,12 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
-    <Compile Include="Messages\ActionProgressedMessage.cs" />
+    <Compile Include="Messages\BlobAnalyzedMessage.cs" />
+    <Compile Include="Messages\FileProgressedMessage.cs" />
     <Compile Include="Messages\SyncStoppedMessage.cs" />
     <Compile Include="Messages\SyncStartedMessage.cs" />
     <Compile Include="Messages\SyncPausedMessage.cs" />
+    <Compile Include="Messages\FileAnalyzedMessage.cs" />
     <Compile Include="WindowsAzure\ByteExtensions.cs" />
     <Compile Include="WindowsAzure\CloudBlobConstants.cs" />
     <Compile Include="WindowsAzure\NumberExtensions.cs" />

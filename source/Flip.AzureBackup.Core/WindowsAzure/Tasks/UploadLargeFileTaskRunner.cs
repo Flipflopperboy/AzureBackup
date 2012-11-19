@@ -48,7 +48,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			_stream = _fileSystem.GetReadFileStream(_fileInfo.FullPath);
 			_reader = new BinaryReader(_stream);
 
-			_messageBus.Publish(new ActionProgressedMessage(_fileInfo.FullPath, 0));
+			_messageBus.Publish(new FileProgressedMessage(_fileInfo.FullPath, 0));
 		}
 
 		protected override bool LoopCondition()
@@ -73,7 +73,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			_bytesSent += _currentBlockSize;
 			_loopCounter++;
 
-			_messageBus.Publish(new ActionProgressedMessage(_fileInfo.FullPath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
+			_messageBus.Publish(new FileProgressedMessage(_fileInfo.FullPath, _loopCounter < _numberOfParts ? _rangeFraction * _loopCounter : 1));
 		}
 
 		protected override void Dispose(bool disposing)

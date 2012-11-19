@@ -59,9 +59,9 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			{
 				return new SingleActionTaskRunner(() =>
 				{
-					_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+					_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 					blob.UploadFile(fileInfo);
-					_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+					_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 				});
 			}
 		}
@@ -71,9 +71,9 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			this._statistics.UpdatedModifiedDateCount++;
 			return new SingleActionTaskRunner(() =>
 			{
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 				blob.SetFileLastModifiedUtc(fileInfo.LastWriteTimeUtc, true);
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 			});
 		}
 
@@ -88,10 +88,10 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			{
 				return new SingleActionTaskRunner(() =>
 				{
-					_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+					_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 					CloudBlob blob = blobContainer.GetBlobReference(fileInfo.BlobName);
 					blob.UploadFile(fileInfo);
-					_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+					_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 				});
 			}
 		}
@@ -104,9 +104,9 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 				string relativePath = blob.GetRelativeFilePath();
 				string fullFilePath = this._fileSystem.Combine(basePath, relativePath);
 
-				_messageBus.Publish(new ActionProgressedMessage(fullFilePath, 0));
+				_messageBus.Publish(new FileProgressedMessage(fullFilePath, 0));
 				blob.DeleteIfExists();
-				_messageBus.Publish(new ActionProgressedMessage(fullFilePath, 1));
+				_messageBus.Publish(new FileProgressedMessage(fullFilePath, 1));
 			});
 		}
 

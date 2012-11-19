@@ -40,7 +40,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 			_files = this._fileSystem
 				.GetFileInformationIncludingSubDirectories(_directoryPath).ToList();
 
-			_blobs = _blobContainer.ListBlobs()
+			_blobs = _blobContainer.ListBlobs(_blobRequestOptions)
 				.Cast<CloudBlob>()
 				.ToDictionary(blob => blob.Uri, blob => blob);
 
@@ -88,12 +88,14 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 						}
 					}
 					_blobs.Remove(blobUri);
+					_totalBlobCount = _blobs.Count;
 				}
 				else
 				{
 					_tasks.Enqueue(_provider.CreateBlobNotExistsTaskRunner(_blobContainer, fileInfo));
 				}
 				_fileCounter++;
+				_messageBus.Publish(new FileAnalyzedMessage(fileInfo.FullPath, _fileCounter, _files.Count));
 			}
 			else
 			{
@@ -102,6 +104,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 					KeyValuePair<Uri, CloudBlob> pair = _blobs.First();
 					_tasks.Enqueue(_provider.CreateFileNotExistsTaskRunner(pair.Value, _directoryPath));
 					_blobs.Remove(pair.Key);
+					_messageBus.Publish(new BlobAnalyzedMessage(pair.Value.GetRelativeFilePath(), _totalBlobCount - _blobs.Count + 1, _totalBlobCount));
 				}
 			}
 		}
@@ -109,6 +112,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 
 
 		private int _fileCounter;
+		private int _totalBlobCount;
 		private List<FileInformation> _files;
 		private Dictionary<Uri, CloudBlob> _blobs;
 		private Queue<TaskRunner> _tasks;
@@ -116,7 +120,7 @@ namespace Flip.AzureBackup.WindowsAzure.Tasks
 		private readonly string _directoryPath;
 		private readonly CloudBlobContainer _blobContainer;
 		private readonly ISyncronizationProvider _provider;
-		private static readonly BlobRequestOptions blobRequestOptions = new BlobRequestOptions
+		private static readonly BlobRequestOptions _blobRequestOptions = new BlobRequestOptions
 		{
 			UseFlatBlobListing = true,
 			BlobListingDetails = BlobListingDetails.Metadata

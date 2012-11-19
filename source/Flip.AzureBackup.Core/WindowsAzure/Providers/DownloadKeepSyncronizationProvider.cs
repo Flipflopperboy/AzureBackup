@@ -48,10 +48,10 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			this._statistics.UpdatedCount++;
 			return new SingleActionTaskRunner(() =>
 			{
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 				blob.DownloadToFile(fileInfo.FullPath);
 				_fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 			});
 		}
 
@@ -60,9 +60,9 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			this._statistics.UpdatedModifiedDateCount++;
 			return new SingleActionTaskRunner(() =>
 			{
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 				_fileSystem.SetLastWriteTimeUtc(fileInfo.FullPath, blob.GetFileLastModifiedUtc());
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 			});
 		}
 
@@ -85,11 +85,11 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			{
 				return new SingleActionTaskRunner(() =>
 				{
-					_messageBus.Publish(new ActionProgressedMessage(fullFilePath, 0));
+					_messageBus.Publish(new FileProgressedMessage(fullFilePath, 0));
 					_fileSystem.EnsureFileDirectory(fullFilePath);
 					blob.DownloadToFile(fullFilePath);
 					_fileSystem.SetLastWriteTimeUtc(fullFilePath, blob.GetFileLastModifiedUtc());
-					_messageBus.Publish(new ActionProgressedMessage(fullFilePath, 1));
+					_messageBus.Publish(new FileProgressedMessage(fullFilePath, 1));
 				});
 			}
 		}

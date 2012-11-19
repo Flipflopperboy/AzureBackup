@@ -44,20 +44,22 @@ namespace Flip.AzureBackup.WindowsAzure
 				this._log.WriteLine(provider.Description);
 				this._log.WriteLine("");
 
+				Queue<TaskRunner> taskRunners = null;
 				using (var worker = new CreateWorkTaskRunner(_messageBus, _fileSystem, provider, settings.DirectoryPath, blobContainer))
 				{
 					worker.Start()
 						  .Wait();
 
-					Queue<TaskRunner> taskRunners = worker.GetSubTaskRunnerQueue();
-					while (taskRunners.Count > 0)
+					taskRunners = worker.GetSubTaskRunnerQueue();
+				}
+				
+				while (taskRunners.Count > 0)
+				{
+					using (var taskRunner = taskRunners.Dequeue())
 					{
-						using (var taskRunner = taskRunners.Dequeue())
-						{
-							taskRunner
-								.Start()
-								.Wait();
-						}
+						taskRunner
+							.Start()
+							.Wait();
 					}
 				}
 

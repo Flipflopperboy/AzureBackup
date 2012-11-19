@@ -41,9 +41,9 @@ namespace Flip.AzureBackup.WindowsAzure.Providers
 			this._statistics.BlobNotExistCount++;
 			return new SingleActionTaskRunner(() =>
 			{
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 0));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 0));
 				_fileSystem.DeleteFile(fileInfo.FullPath);
-				_messageBus.Publish(new ActionProgressedMessage(fileInfo.FullPath, 1));
+				_messageBus.Publish(new FileProgressedMessage(fileInfo.FullPath, 1));
 			});
 		}
 	}

@@ -4,9 +4,9 @@
 
 namespace Flip.AzureBackup.Messages
 {
-	public sealed class ActionProgressedMessage : MessageBase
+	public sealed class FileProgressedMessage : MessageBase
 	{
-		public ActionProgressedMessage(string fullFilePath, decimal fraction)
+		public FileProgressedMessage(string fullFilePath, decimal fraction)
 		{
 			this.FullFilePath = fullFilePath;
 			this.Fraction = fraction;

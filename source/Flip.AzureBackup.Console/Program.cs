@@ -57,7 +57,9 @@ namespace Flip.AzureBackup.Console
 						}
 					});
 
-				messageBus.Subscribe<ActionProgressedMessage>(OnActionProgressed);
+				messageBus.Subscribe<FileProgressedMessage>(OnActionProgressed);
+				messageBus.Subscribe<FileAnalyzedMessage>(OnFileAnalyzed);
+				messageBus.Subscribe<BlobAnalyzedMessage>(OnBlobAnalyzed);
 
 				synchronizer.Sync(settings);
 			}
@@ -140,7 +142,7 @@ namespace Flip.AzureBackup.Console
 			return true;
 		}
 
-		private static void OnActionProgressed(ActionProgressedMessage message)
+		private static void OnActionProgressed(FileProgressedMessage message)
 		{
 			if (message.Fraction == 0)
 			{
@@ -156,6 +158,16 @@ namespace Flip.AzureBackup.Console
 			{
 				System.Console.WriteLine(message.Fraction.ToString("P0"));
 			}
+		}
+
+		private static void OnFileAnalyzed(FileAnalyzedMessage message)
+		{
+			System.Console.WriteLine(string.Format("Analyzed file {0} of {1}: '{2}'", message.Number, message.Total, message.FullFilePath));
+		}
+
+		private static void OnBlobAnalyzed(BlobAnalyzedMessage message)
+		{
+			System.Console.WriteLine(string.Format("Analyzed blob {0} of {1}: '{2}'", message.Number, message.Total, message.FileRelativePath));
 		}
 
 		private static void ShowTryMessage()
